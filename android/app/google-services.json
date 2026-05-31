@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "75410933593",
+    "project_id": "kanban-board-2d91f",
+    "storage_bucket": "kanban-board-2d91f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:75410933593:android:a24995fdbc769ae425ae48",
+        "android_client_info": {
+          "package_name": "com.coselaw.kanban_board"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFFyUvmS-SFUcjm_gBJAlAVZcHBMw-jlc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:75410933593:android:ccb98c900011185825ae48",
+        "android_client_info": {
+          "package_name": "com.example.flutter_app_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFFyUvmS-SFUcjm_gBJAlAVZcHBMw-jlc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
