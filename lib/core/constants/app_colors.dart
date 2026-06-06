@@ -9,8 +9,8 @@ class AppColors {
   static const Color border = Color(0xFF26272B);
   static const Color onSurface = Color(0xFFF7F8F8);
   static const Color muted = Color(0xFF8A8F98);
-  static const Color primary = Color(0xFF7C7FE8);
-  static const Color primaryMuted = Color(0xFF5E6AD2);
+  static const Color primary = Color(0xFFFFFFFF);
+  static const Color primaryMuted = Color(0xFFCCCCCC);
 }
 
 class TicketColor {

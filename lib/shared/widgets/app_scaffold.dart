@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/board/screens/board_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/planner/screens/planner_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 import '../../features/team/screens/team_screen.dart';
 
 class AppScaffold extends StatefulWidget {
@@ -20,6 +21,7 @@ class _AppScaffoldState extends State<AppScaffold> {
     BoardScreen(),
     PlannerScreen(),
     TeamScreen(),
+    ProfileScreen(),
   ];
 
   static const List<NavigationDestination> _destinations = [
@@ -42,6 +44,11 @@ class _AppScaffoldState extends State<AppScaffold> {
       icon: Icon(Icons.groups_outlined),
       selectedIcon: Icon(Icons.groups),
       label: 'Team',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.person_outline),
+      selectedIcon: Icon(Icons.person),
+      label: 'Profile',
     ),
   ];
 
