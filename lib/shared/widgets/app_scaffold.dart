@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../features/board/screens/board_screen.dart';
-import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/planner/screens/planner_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/team/screens/team_screen.dart';
+import '../../state/team_state.dart';
 
 class AppScaffold extends StatefulWidget {
   const AppScaffold({super.key});
@@ -16,8 +17,16 @@ class AppScaffold extends StatefulWidget {
 class _AppScaffoldState extends State<AppScaffold> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    //load the user teams when the app first opens after login
+    Future.microtask(() {
+      if (mounted) context.read<TeamState>().loadTeams();
+    });
+  }
+
   static const List<Widget> _pages = [
-    DashboardScreen(),
     BoardScreen(),
     PlannerScreen(),
     TeamScreen(),
@@ -25,11 +34,6 @@ class _AppScaffoldState extends State<AppScaffold> {
   ];
 
   static const List<NavigationDestination> _destinations = [
-    NavigationDestination(
-      icon: Icon(Icons.dashboard_outlined),
-      selectedIcon: Icon(Icons.dashboard),
-      label: 'Dashboard',
-    ),
     NavigationDestination(
       icon: Icon(Icons.view_kanban_outlined),
       selectedIcon: Icon(Icons.view_kanban),

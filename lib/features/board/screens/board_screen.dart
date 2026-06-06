@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../shared/widgets/team_switcher_dropdown.dart';
+import '../../../state/team_state.dart';
+import '../../team/screens/create_team_screen.dart';
 
 class BoardScreen extends StatelessWidget {
   const BoardScreen({super.key});
@@ -38,16 +42,70 @@ class BoardScreen extends StatelessWidget {
     ),
   ];
 
+  void _goToCreateTeam(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateTeamScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Board')),
-      body: ListView.separated(
+    TeamState teamState = context.watch<TeamState>();
+
+    Widget body;
+
+    if (teamState.isLoading) {
+      body = const Center(child: CircularProgressIndicator());
+    } else if (teamState.teams.isEmpty) {
+      //no teams yet, show a prompt to create one
+      body = Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.groups_outlined, size: 64, color: AppColors.muted),
+            const SizedBox(height: 16),
+            const Text(
+              'No teams yet',
+              style: TextStyle(
+                color: AppColors.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Create a team to start tracking tasks',
+              style: TextStyle(color: AppColors.muted, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _goToCreateTeam(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Create Team'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      //team selected — show the board
+      body = ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         itemCount: _samples.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (_, i) => _TicketCard(ticket: _samples[i]),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Board'),
+        actions: [
+          const TeamSwitcherDropdown(),
+          const SizedBox(width: 20),
+        ],
       ),
+      body: body,
     );
   }
 }
