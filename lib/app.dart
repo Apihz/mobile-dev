@@ -30,8 +30,8 @@ class KanbanBoardApp extends StatelessWidget {
             if (snapshot.hasData) {
               return const AppScaffold();
             }
-            //reset team state when user logs out
-            context.read<TeamState>().reset();
+            //reset team state after build finishes, not during it
+            Future.microtask(() => context.read<TeamState>().reset());
             return const WelcomeScreen();
           },
         ),
