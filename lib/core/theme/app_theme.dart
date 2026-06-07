@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
 
@@ -70,18 +71,18 @@ class AppTheme {
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
-      textTheme: base.textTheme
+      textTheme: GoogleFonts.interTextTheme(base.textTheme)
           .apply(
             bodyColor: AppColors.onSurface,
             displayColor: AppColors.onSurface,
           )
           .copyWith(
-            bodyMedium: const TextStyle(
+            bodyMedium: GoogleFonts.inter(
               color: AppColors.onSurface,
               fontSize: 14,
               height: 1.4,
             ),
-            bodySmall: const TextStyle(
+            bodySmall: GoogleFonts.inter(
               color: AppColors.muted,
               fontSize: 12,
               height: 1.4,
