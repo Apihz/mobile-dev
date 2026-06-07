@@ -4,9 +4,9 @@ class AppColors {
   const AppColors._();
 
   static const Color background = Color(0xFF08090A);
-  static const Color surface = Color(0xFF111114);
-  static const Color surfaceElevated = Color(0xFF1A1B1F);
-  static const Color border = Color(0xFF26272B);
+  static const Color surface = Color.fromARGB(255, 16, 16, 20);
+  static const Color surfaceElevated = Color.fromARGB(255, 19, 21, 24);
+  static const Color border = Color.fromARGB(255, 32, 33, 37);
   static const Color onSurface = Color(0xFFF7F8F8);
   static const Color muted = Color(0xFF8A8F98);
   static const Color primary = Color(0xFFFFFFFF);
@@ -21,6 +21,27 @@ class TicketColor {
 
   const TicketColor(this.label, this.background, this.foreground, this.border);
 }
+
+class TaskColors {
+  static Color status(String status) {
+    switch (status) {
+      case 'doing':  return const Color(0xFF6E9FFF);
+      case 'todo': return const Color(0xFFE8A44A);
+      case 'done':   return const Color(0xFF4DC98A);
+      default:       return AppColors.muted;
+    }
+  }
+
+  static Color priority(String priority) {
+    switch (priority) {
+      case 'high':   return const Color(0xFFFF8585);
+      case 'medium': return const Color(0xFFE8A44A);
+      case 'low':    return const Color(0xFF4DC98A);
+      default:       return AppColors.muted;
+    }
+  }
+}
+
 
 class TicketColors {
   const TicketColors._();
@@ -84,4 +105,5 @@ class TicketColors {
     purple,
     pink,
   ];
+
 }
