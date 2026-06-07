@@ -89,44 +89,6 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     }
   }
 
-  Future<void> _deleteTask() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceElevated,
-        title: const Text('Delete task?',
-            style: TextStyle(color: AppColors.onSurface)),
-        content: const Text('This cannot be undone.',
-            style: TextStyle(color: AppColors.muted)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete',
-                style: TextStyle(color: Color(0xFFFF8585))),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      await _firestoreService.deleteTask(
-          widget.projectId, widget.editTask!.id);
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not delete: $e')),
-        );
-      }
-    }
-  }
-
   Future<void> _pickDeadline() async {
     final picked = await showDatePicker(
       context: context,

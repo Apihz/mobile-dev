@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/task.dart';
 import '../widgets/add_task_sheet.dart';
-
+import '../services/firestore_service.dart';
 
 
 class TaskDetailScreen extends StatelessWidget {
@@ -41,12 +41,35 @@ class TaskDetailScreen extends StatelessWidget {
                   backgroundColor: Colors.transparent,
                   builder: (_) => AddTaskSheet(projectId: projectId,initialStatus: task.status, editTask: task,));
                 } else if (value == 'delete') {
-                  // delete
+                  showDialog(
+                    context:context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: AppColors.surfaceElevated,
+                      title:const Text('Delete task?',
+                        style: TextStyle(color: AppColors.onSurface),
+                      ),
+                      content: const Text('This cannot be undone.',
+                        style: TextStyle(color: AppColors.muted),
+                      ),
+                      actions: [
+                        TextButton(onPressed:() => 
+                          Navigator.pop(ctx),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(onPressed:() async {
+                          Navigator.pop(ctx);
+                          await FirestoreService().deleteTask(projectId, task.id);
+                          if(context.mounted) Navigator.pop(context);
+                        }, 
+                        child: const Text('Delete', style: TextStyle(color: Colors.red),))
+                      ]
+                      ));
                 }
               },
               itemBuilder: (_) => [
                 const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                const PopupMenuItem(value: 'delete', child: Text('Delete', 
+                style: TextStyle(color: Colors.red),)),
               ],
             ),
           ),
