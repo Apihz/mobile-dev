@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/task.dart';
 import '../widgets/add_task_sheet.dart';
+
 
 
 class TaskDetailScreen extends StatelessWidget {
@@ -28,10 +28,18 @@ class TaskDetailScreen extends StatelessWidget {
               border: Border.all(color: AppColors.border),
             ),
             child: PopupMenuButton<String>(
+              color:AppColors.surfaceElevated,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: AppColors.border),
+              ),
               icon: const Icon(Icons.more_horiz, size: 18),
               onSelected: (value) {
                 if (value == 'edit') {
-                  // open AddTaskSheet
+                  showModalBottomSheet(context: context, 
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => AddTaskSheet(projectId: projectId,initialStatus: task.status, editTask: task,));
                 } else if (value == 'delete') {
                   // delete
                 }
