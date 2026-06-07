@@ -1,12 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../features/auth/services/auth_service.dart';
+import '../../../models/task.dart';
 import '../../../shared/widgets/team_switcher_dropdown.dart';
 import '../../../state/team_state.dart';
 import '../../team/screens/create_team_screen.dart';
-import '../../../features/auth/services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../services/firestore_service.dart';
+import '../widgets/add_task_sheet.dart';
+import '../widgets/kanban_column.dart';
+import 'task_detail_screen.dart';
 
 class BoardScreen extends StatelessWidget {
   const BoardScreen({super.key});
@@ -19,59 +24,55 @@ class BoardScreen extends StatelessWidget {
     return 'Good Night, $name!';
   }
 
-  static const List<_SampleTicket> _samples = [
-    _SampleTicket(
-      title: 'Literature review draft',
-      subject: 'CSCI 4311',
-      due: 'Due Fri',
-      color: TicketColors.purple,
-    ),
-    _SampleTicket(
-      title: 'Wireframes for Board screen',
-      subject: 'Design',
-      due: 'Due Sun',
-      color: TicketColors.blue,
-    ),
-    _SampleTicket(
-      title: 'Set up Supabase schema',
-      subject: 'Backend',
-      due: 'Due Mon',
-      color: TicketColors.green,
-    ),
-    _SampleTicket(
-      title: 'Demo rehearsal slides',
-      subject: 'Presentation',
-      due: 'Next week',
-      color: TicketColors.orange,
-    ),
-    _SampleTicket(
-      title: 'Push notification spike',
-      subject: 'Research',
-      due: 'No deadline',
-      color: TicketColors.pink,
-    ),
-  ];
-
-  void _goToCreateTeam(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const CreateTeamScreen()),
+  Widget _buildColumn(
+    BuildContext context,
+    String projectId,
+    FirestoreService service,
+    String status,
+    String title,
+    List<Task> allTasks,
+  ) {
+    final columnTasks = allTasks.where((t) => t.status == status).toList();
+    return SizedBox(
+      height: MediaQuery.of(context).size.height - 200,
+      child: KanbanColumn(
+        status: status,
+        title: title,
+        tasks: columnTasks,
+        onTaskDropped: (task, newStatus) {
+          service.updateTaskStatus(projectId, task.id, newStatus);
+        },
+        onAddTask: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => AddTaskSheet(
+              projectId: projectId,
+              initialStatus: status,
+            ),
+          );
+        },
+        onTaskTap: (task) {
+          Navigator.push(context, MaterialPageRoute(
+            builder: (_) => TaskDetailScreen(task: task, projectId: projectId)
+          ));
+        },
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final User? user = AuthService().currentUser;
-    //take just the part before @ so greeting reads "Good Morning, hafyz!"
     final String displayName = user?.email?.split('@').first ?? 'there';
-    TeamState teamState = context.watch<TeamState>();
+    final TeamState teamState = context.watch<TeamState>();
 
     Widget body;
 
     if (teamState.isLoading) {
       body = const Center(child: CircularProgressIndicator());
     } else if (teamState.teams.isEmpty) {
-      //no teams yet, show a prompt to create one
       body = Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -93,7 +94,10 @@ class BoardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => _goToCreateTeam(context),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CreateTeamScreen()),
+              ),
               icon: const Icon(Icons.add),
               label: const Text('Create Team'),
             ),
@@ -101,129 +105,90 @@ class BoardScreen extends StatelessWidget {
         ),
       );
     } else {
-      //team selected — show the board
-      body = ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        itemCount: _samples.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (_, i) => _TicketCard(ticket: _samples[i]),
+      final String projectId = teamState.currentTeam!.id;
+      final FirestoreService service = FirestoreService();
+
+      body = StreamBuilder<List<Task>>(
+        stream: service.watchTasks(projectId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text(
+                'Something went wrong',
+                style: TextStyle(color: AppColors.muted),
+              ),
+            );
+          }
+
+          final List<Task> allTasks = snapshot.data ?? [];
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildColumn(context, projectId, service, 'todo',   'To Do',  allTasks),
+                _buildColumn(context, projectId, service, 'doing',  'Doing',  allTasks),
+                _buildColumn(context, projectId, service, 'done',   'Done',   allTasks),
+              ],
+            ),
+          );
+        },
       );
     }
 
     return Scaffold(
-     appBar: AppBar(
-      toolbarHeight: 90,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _getGreeting(displayName),
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Manage your tasks and projects',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        const TeamSwitcherDropdown(),
-        const SizedBox(width: 20),
-      ],
-    ),
-      body: body,
-    );
-  }
-}
-
-class _SampleTicket {
-  final String title;
-  final String subject;
-  final String due;
-  final TicketColor color;
-
-  const _SampleTicket({
-    required this.title,
-    required this.subject,
-    required this.due,
-    required this.color,
-  });
-}
-
-class _TicketCard extends StatelessWidget {
-  final _SampleTicket ticket;
-
-  const _TicketCard({required this.ticket});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _SubjectChip(color: ticket.color, label: ticket.subject),
-              const Spacer(),
-              Text(
-                ticket.due,
-                style: const TextStyle(color: AppColors.muted, fontSize: 12),
+      appBar: AppBar(
+        toolbarHeight: 90,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _getGreeting(displayName),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            ticket.title,
-            style: const TextStyle(
-              color: AppColors.onSurface,
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              letterSpacing: -0.1,
             ),
-          ),
+            const SizedBox(height: 4),
+            const Text(
+              'Manage your tasks and projects',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          const TeamSwitcherDropdown(),
+          const SizedBox(width: 20),
         ],
       ),
-    );
-  }
-}
-
-class _SubjectChip extends StatelessWidget {
-  final TicketColor color;
-  final String label;
-
-  const _SubjectChip({required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.background,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.border),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color.foreground,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.1,
-        ),
-      ),
+      body: body,
+      //only show FAB when a team is selected
+      floatingActionButton: teamState.currentTeam != null
+          ? FloatingActionButton(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => AddTaskSheet(
+                    projectId: teamState.currentTeam!.id,
+                    initialStatus: 'todo',
+                  ),
+                );
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }
