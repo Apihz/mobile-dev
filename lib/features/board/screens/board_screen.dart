@@ -5,9 +5,19 @@ import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/team_switcher_dropdown.dart';
 import '../../../state/team_state.dart';
 import '../../team/screens/create_team_screen.dart';
+import '../../../features/auth/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BoardScreen extends StatelessWidget {
   const BoardScreen({super.key});
+
+  String _getGreeting(String name) {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning, $name!';
+    if (hour < 17) return 'Good Afternoon, $name!';
+    if (hour < 20) return 'Good Evening, $name!';
+    return 'Good Night, $name!';
+  }
 
   static const List<_SampleTicket> _samples = [
     _SampleTicket(
@@ -51,6 +61,9 @@ class BoardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final User? user = AuthService().currentUser;
+    //take just the part before @ so greeting reads "Good Morning, hafyz!"
+    final String displayName = user?.email?.split('@').first ?? 'there';
     TeamState teamState = context.watch<TeamState>();
 
     Widget body;
@@ -98,13 +111,33 @@ class BoardScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Board'),
-        actions: [
-          const TeamSwitcherDropdown(),
-          const SizedBox(width: 20),
+     appBar: AppBar(
+      toolbarHeight: 90,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _getGreeting(displayName),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Manage your tasks and projects',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
         ],
       ),
+      actions: [
+        const TeamSwitcherDropdown(),
+        const SizedBox(width: 20),
+      ],
+    ),
       body: body,
     );
   }
