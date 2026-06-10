@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,8 +15,60 @@ import '../widgets/add_task_sheet.dart';
 import '../widgets/kanban_column.dart';
 import 'task_detail_screen.dart';
 
-class BoardScreen extends StatelessWidget {
+class BoardScreen extends StatefulWidget {
   const BoardScreen({super.key});
+
+  @override
+  State<BoardScreen> createState() => _BoardScreenState();
+}
+
+class _BoardScreenState extends State<BoardScreen> {
+  final ScrollController _scrollController = ScrollController();
+  Timer? _scrollTimer;
+
+  @override
+  void dispose() {
+    _scrollTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  //start auto scrolling in the given direction when dragging to screen edge
+  void _startScrolling(double speed) {
+    _scrollTimer?.cancel();
+    _scrollTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+      if (!_scrollController.hasClients) return;
+      final newOffset = (_scrollController.offset + speed).clamp(
+        0.0,
+        _scrollController.position.maxScrollExtent,
+      );
+      _scrollController.jumpTo(newOffset);
+    });
+  }
+
+  void _stopScrolling() {
+    _scrollTimer?.cancel();
+    _scrollTimer = null;
+  }
+
+  //invisible drag zone on left/right edge that triggers scrolling
+  Widget _buildScrollZone({required double speed, required bool isRight}) {
+    return Positioned(
+      top: 0,
+      bottom: 0,
+      left: isRight ? null : 0,
+      right: isRight ? 0 : null,
+      width: 60,
+      child: DragTarget<Task>(
+        onWillAcceptWithDetails: (_) {
+          _startScrolling(speed);
+          return false;
+        },
+        onLeave: (_) => _stopScrolling(),
+        builder: (_, __, ___) => const SizedBox.expand(),
+      ),
+    );
+  }
 
   String _getGreeting(String name) {
     final hour = DateTime.now().hour;
@@ -125,17 +179,26 @@ class BoardScreen extends StatelessWidget {
 
           final List<Task> allTasks = snapshot.data ?? [];
 
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildColumn(context, projectId, service, 'todo',   'To Do',  allTasks),
-                _buildColumn(context, projectId, service, 'doing',  'Doing',  allTasks),
-                _buildColumn(context, projectId, service, 'done',   'Done',   allTasks),
-              ],
-            ),
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                controller: _scrollController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildColumn(context, projectId, service, 'todo',  'To Do', allTasks),
+                    _buildColumn(context, projectId, service, 'doing', 'Doing', allTasks),
+                    _buildColumn(context, projectId, service, 'done',  'Done',  allTasks),
+                  ],
+                ),
+              ),
+              //scroll left when dragging near left edge
+              _buildScrollZone(speed: -10.0, isRight: false),
+              //scroll right when dragging near right edge
+              _buildScrollZone(speed: 10.0, isRight: true),
+            ],
           );
         },
       );
