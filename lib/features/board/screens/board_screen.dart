@@ -98,6 +98,43 @@ class _BoardScreenState extends State<BoardScreen> {
         tasks: columnTasks,
         onTaskDropped: (task, newStatus) {
           service.updateTaskStatus(projectId, task.id, newStatus);
+
+          //show feedback when mobing task
+          final statusColor = TaskColors.status(newStatus);
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: AppColors.surfaceElevated,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: AppColors.border),
+                ),
+                duration: const Duration(seconds: 2),
+                content: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Moved to $title',
+                      style: const TextStyle(
+                        color: AppColors.onSurface,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
         },
         onAddTask: () {
           showModalBottomSheet(
