@@ -22,46 +22,68 @@ class _TeamScreenState extends State<TeamScreen> {
   Timer? _scrollTimer;
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Your Team Lists,')),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            margin: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'Member 1',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('Description of Team A goes here.'),
-                ),
-                ListTile(title: Text('Name: John Doe')),
-                ListTile(title: Text('Role: Project Manager')),
-                ListTile(title: Text('Email: johndoe@example.com')),
-                ListTile(title: Text('Phone: (123) 456-7890')),
-                SizedBox(height: 16),
-              ],
-            ),
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text(
+            'Your Team List',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CreateTeamScreen()),
-              );
-            },
-            child: Text('Add New Teammate'),
-          ),
-        ],
-      ),
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Member 1',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('Description of Team A goes here.'),
+                  ),
+                ],
+              ),
+            ),
+            Flexible(
+              child: Container(
+                padding: EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: AppColors.muted,
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                margin: EdgeInsets.only(left: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Name: John Doe'),
+                    SizedBox(height: 8),
+                    Text('Role: Project Manager'),
+                    SizedBox(height: 8),
+                    Text('Email: johndoe@example.com'),
+                    SizedBox(height: 8),
+                    Text('Phone: (123) 456-7890'),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CreateTeamScreen()),
+            );
+          },
+          child: Text('Add New Teammate'),
+        ),
+      ],
     );
   }
 }
