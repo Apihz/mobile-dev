@@ -31,7 +31,8 @@ class KanbanBoardApp extends StatelessWidget {
               return const AppScaffold();
             }
             //reset team state after build finishes, not during it
-            Future.microtask(() => context.read<TeamState>().reset());
+            final teamState = context.read<TeamState>();
+            Future.microtask(() => teamState.reset());
             return const WelcomeScreen();
           },
         ),
