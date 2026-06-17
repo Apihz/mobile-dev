@@ -15,6 +15,8 @@ class KanbanColumn extends StatefulWidget {
   final bool showDescription;
   final bool showDeadline;
   final bool compact;
+  //maps a member uid to their name, used to show who a task is assigned to
+  final Map<String, String> memberNames;
 
   const KanbanColumn({
     super.key,
@@ -28,6 +30,7 @@ class KanbanColumn extends StatefulWidget {
     required this.showDescription,
     required this.showDeadline,
     required this.compact,
+    required this.memberNames,
   });
 
   @override
@@ -135,6 +138,9 @@ class _KanbanColumnState extends State<KanbanColumn> {
 
   //build a task card with the column's display options
   Widget _buildCard(Task task, {VoidCallback? onTap}) {
+    //look up the assignee's name from their uid
+    final String? assigneeName =
+        task.assigneeId == null ? null : widget.memberNames[task.assigneeId];
     return TaskCard(
       task: task,
       onTap: onTap,
@@ -142,6 +148,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
       showDescription: widget.showDescription,
       showDeadline: widget.showDeadline,
       compact: widget.compact,
+      assigneeName: assigneeName,
     );
   }
 
