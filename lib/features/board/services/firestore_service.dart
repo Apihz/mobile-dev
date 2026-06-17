@@ -27,6 +27,20 @@ class FirestoreService {
     });
   }
 
+  // Write several tasks in one atomic batch (used by AI import).
+  Future<void> addTasksBatch(String projectId, List<Task> tasks) async {
+    final batch = _db.batch();
+    final col =
+        _db.collection('projects').doc(projectId).collection('tasks');
+    for (final task in tasks) {
+      batch.set(col.doc(), {
+        ...task.toMap(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
   //called when a card is dragged to a different column
   Future<void> updateTaskStatus(
       String projectId, String taskId, String newStatus) async {

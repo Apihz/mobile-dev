@@ -5,11 +5,23 @@ import '../../../models/task.dart';
 class TaskCard extends StatelessWidget {
   final Task task;
   final void Function()? onTap;
+  //display options passed down from the board
+  final bool showPriority;
+  final bool showDescription;
+  final bool showDeadline;
+  final bool compact;
+  //name of the teammate this task is assigned to, null if nobody
+  final String? assigneeName;
 
   const TaskCard({
     super.key,
     required this.task,
     this.onTap,
+    this.showPriority = true,
+    this.showDescription = true,
+    this.showDeadline = true,
+    this.compact = false,
+    this.assigneeName,
   });
 
   @override
@@ -17,39 +29,41 @@ class TaskCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:EdgeInsets.symmetric(horizontal:12,vertical:12),
+        padding: EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: compact ? 8 : 12,
+        ),
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 23, 24, 26),
           borderRadius: BorderRadius.circular(16),
-          // border:Border.all(
-          //   color: AppColors.onSurface.withValues(alpha: 0.1),
-          // ) 
         ),
-        child:
-        Column(
-          crossAxisAlignment:CrossAxisAlignment.start,
-          children:[
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             //priority badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: TaskColors.priority(task.priority).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: TaskColors.priority(task.priority).withValues(alpha: 0.4),
+            if (showPriority) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: TaskColors.priority(task.priority).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: TaskColors.priority(task.priority).withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Text(
+                  task.priority.toUpperCase(),
+                  style: TextStyle(
+                    color: TaskColors.priority(task.priority),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
-              child: Text(
-                task.priority.toUpperCase(),
-                style: TextStyle(
-                  color: TaskColors.priority(task.priority),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
+              SizedBox(height: compact ? 8 : 12),
+            ],
+
             Text(
               task.title,
               style: const TextStyle(
@@ -59,36 +73,64 @@ class TaskCard extends StatelessWidget {
                 height: 1.3,
               ),
             ),
-            const SizedBox(height: 4),
-             Text(
-              task.description,
-              maxLines:2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.onSurface,
-                fontSize: 10,
-                fontWeight: FontWeight.w300,
-                height: 1.3,
+
+            //only show the description if turned on and the task has one
+            if (showDescription && task.description.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                task.description,
+                maxLines: compact ? 1 : 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.onSurface,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w300,
+                  height: 1.3,
+                ),
               ),
-            ),
-            
-            const SizedBox(height: 20),
+            ],
 
-
-            if (task.deadline != null)
-              Row(
+            if ((showDeadline && task.deadline != null) ||
+                assigneeName != null) ...[
+              SizedBox(height: compact ? 10 : 20),
+              Wrap(
+                spacing: 12,
+                runSpacing: 6,
                 children: [
-                  const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.muted),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Due ${task.deadline!.day}/${task.deadline!.month}',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 12),
-                  ),
+                  if (showDeadline && task.deadline != null)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.calendar_today_outlined,
+                            size: 12, color: AppColors.muted),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Due ${task.deadline!.day}/${task.deadline!.month}',
+                          style: const TextStyle(
+                              color: AppColors.muted, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  if (assigneeName != null)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.person_outline,
+                            size: 12, color: AppColors.muted),
+                        const SizedBox(width: 4),
+                        Text(
+                          assigneeName!,
+                          style: const TextStyle(
+                              color: AppColors.muted, fontSize: 12),
+                        ),
+                      ],
+                    ),
                 ],
               ),
-          ]
-          )
+            ],
+          ],
         ),
+      ),
     );
   }
 }

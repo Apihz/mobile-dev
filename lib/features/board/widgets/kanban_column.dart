@@ -10,6 +10,13 @@ class KanbanColumn extends StatefulWidget {
   final void Function(Task task, String newStatus) onTaskDropped;
   final VoidCallback onAddTask;
   final void Function(Task task) onTaskTap;
+  //display options passed down from the board
+  final bool showPriority;
+  final bool showDescription;
+  final bool showDeadline;
+  final bool compact;
+  //maps a member uid to their name, used to show who a task is assigned to
+  final Map<String, String> memberNames;
 
   const KanbanColumn({
     super.key,
@@ -19,6 +26,11 @@ class KanbanColumn extends StatefulWidget {
     required this.onTaskDropped,
     required this.onAddTask,
     required this.onTaskTap,
+    required this.showPriority,
+    required this.showDescription,
+    required this.showDeadline,
+    required this.compact,
+    required this.memberNames,
   });
 
   @override
@@ -124,6 +136,22 @@ class _KanbanColumnState extends State<KanbanColumn> {
     );
   }
 
+  //build a task card with the column's display options
+  Widget _buildCard(Task task, {VoidCallback? onTap}) {
+    //look up the assignee's name from their uid
+    final String? assigneeName =
+        task.assigneeId == null ? null : widget.memberNames[task.assigneeId];
+    return TaskCard(
+      task: task,
+      onTap: onTap,
+      showPriority: widget.showPriority,
+      showDescription: widget.showDescription,
+      showDeadline: widget.showDeadline,
+      compact: widget.compact,
+      assigneeName: assigneeName,
+    );
+  }
+
   Widget _buildTaskList() {
     if (widget.tasks.isEmpty) {
       return Column(
@@ -167,18 +195,15 @@ class _KanbanColumnState extends State<KanbanColumn> {
             color: Colors.transparent,
             child: Opacity(
               opacity: 0.9,
-              child: SizedBox(width: 280, child: TaskCard(task: task)),
+              child: SizedBox(width: 280, child: _buildCard(task)),
             ),
           ),
           //original card fades while being dragged
           childWhenDragging: Opacity(
             opacity: 0.3,
-            child: TaskCard(task: task),
+            child: _buildCard(task),
           ),
-          child: TaskCard(
-            task: task,
-            onTap: () => widget.onTaskTap(task),
-          ),
+          child: _buildCard(task, onTap: () => widget.onTaskTap(task)),
         );
       },
     );

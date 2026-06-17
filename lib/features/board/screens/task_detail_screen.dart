@@ -75,7 +75,7 @@ class TaskDetailScreen extends StatelessWidget {
           ),
         ],
     ),
-    body:SingleChildScrollView(padding:const EdgeInsets.all(20), 
+    body:SingleChildScrollView(padding:const EdgeInsets.fromLTRB(20, 10, 20, 30), 
     child: Column(
       crossAxisAlignment:CrossAxisAlignment.start,
       children: [

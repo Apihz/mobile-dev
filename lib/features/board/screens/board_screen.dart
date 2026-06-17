@@ -9,9 +9,12 @@ import '../../../features/auth/services/auth_service.dart';
 import '../../../models/task.dart';
 import '../../../shared/widgets/team_switcher_dropdown.dart';
 import '../../../state/team_state.dart';
+import '../../ai_import/screens/ai_import_screen.dart';
 import '../../team/screens/create_team_screen.dart';
+import '../board_display_settings.dart';
 import '../services/firestore_service.dart';
 import '../widgets/add_task_sheet.dart';
+import '../widgets/board_settings_sheet.dart';
 import '../widgets/kanban_column.dart';
 import 'task_detail_screen.dart';
 
@@ -25,6 +28,54 @@ class BoardScreen extends StatefulWidget {
 class _BoardScreenState extends State<BoardScreen> {
   final ScrollController _scrollController = ScrollController();
   Timer? _scrollTimer;
+
+  //how the task cards are displayed and sorted on the board
+  BoardDisplaySettings _settings = BoardDisplaySettings();
+
+  //sort the tasks in a column based on the chosen option
+  List<Task> _sortTasks(List<Task> tasks) {
+    final sorted = List<Task>.from(tasks);
+
+    if (_settings.sortBy == 'priority') {
+      //high first, then medium, then low
+      final order = {'high': 0, 'medium': 1, 'low': 2};
+      sorted.sort((a, b) =>
+          (order[a.priority] ?? 3).compareTo(order[b.priority] ?? 3));
+    } else if (_settings.sortBy == 'deadline') {
+      sorted.sort((a, b) {
+        //tasks without a deadline go to the bottom
+        if (a.deadline == null && b.deadline == null) return 0;
+        if (a.deadline == null) return 1;
+        if (b.deadline == null) return -1;
+        return a.deadline!.compareTo(b.deadline!);
+      });
+    } else if (_settings.sortBy == 'title') {
+      sorted.sort(
+          (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+    } else if (_settings.sortBy == 'newest') {
+      sorted.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    //'default' keeps the original order from Firestore
+    return sorted;
+  }
+
+  //open the settings sheet and update the board when something changes
+  void _openSettings() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => BoardSettingsSheet(
+        settings: _settings,
+        onChanged: (updated) {
+          setState(() => _settings = updated);
+        },
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -65,7 +116,7 @@ class _BoardScreenState extends State<BoardScreen> {
           return false;
         },
         onLeave: (_) => _stopScrolling(),
-        builder: (_, __, ___) => const SizedBox.expand(),
+        builder: (_, _, _) => const SizedBox.expand(),
       ),
     );
   }
@@ -85,16 +136,60 @@ class _BoardScreenState extends State<BoardScreen> {
     String status,
     String title,
     List<Task> allTasks,
+    Map<String, String> memberNames,
   ) {
-    final columnTasks = allTasks.where((t) => t.status == status).toList();
+    final columnTasks =
+        _sortTasks(allTasks.where((t) => t.status == status).toList());
     return SizedBox(
       height: MediaQuery.of(context).size.height - 200,
       child: KanbanColumn(
         status: status,
         title: title,
         tasks: columnTasks,
+        memberNames: memberNames,
+        showPriority: _settings.showPriority,
+        showDescription: _settings.showDescription,
+        showDeadline: _settings.showDeadline,
+        compact: _settings.compact,
         onTaskDropped: (task, newStatus) {
           service.updateTaskStatus(projectId, task.id, newStatus);
+
+          //show feedback when mobing task
+          final statusColor = TaskColors.status(newStatus);
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: AppColors.surfaceElevated,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: AppColors.border),
+                ),
+                duration: const Duration(seconds: 2),
+                content: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Moved to $title',
+                      style: const TextStyle(
+                        color: AppColors.onSurface,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
         },
         onAddTask: () {
           showModalBottomSheet(
@@ -162,6 +257,11 @@ class _BoardScreenState extends State<BoardScreen> {
       final String projectId = teamState.currentTeam!.id;
       final FirestoreService service = FirestoreService();
 
+      //map each members uid to their name so cards can show the assignee
+      final Map<String, String> memberNames = {
+        for (final m in teamState.members) m.uid: m.name
+      };
+
       body = StreamBuilder<List<Task>>(
         stream: service.watchTasks(projectId),
         builder: (context, snapshot) {
@@ -188,9 +288,9 @@ class _BoardScreenState extends State<BoardScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildColumn(context, projectId, service, 'todo',  'To Do', allTasks),
-                    _buildColumn(context, projectId, service, 'doing', 'Doing', allTasks),
-                    _buildColumn(context, projectId, service, 'done',  'Done',  allTasks),
+                    _buildColumn(context, projectId, service, 'todo',  'To Do', allTasks, memberNames),
+                    _buildColumn(context, projectId, service, 'doing', 'Doing', allTasks, memberNames),
+                    _buildColumn(context, projectId, service, 'done',  'Done',  allTasks, memberNames),
                   ],
                 ),
               ),
@@ -228,8 +328,27 @@ class _BoardScreenState extends State<BoardScreen> {
           ],
         ),
         actions: [
+          if (teamState.currentTeam != null)
+            IconButton(
+              tooltip: 'AI task import',
+              icon: const Icon(Icons.auto_awesome),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AiImportScreen(
+                    projectId: teamState.currentTeam!.id,
+                  ),
+                ),
+              ),
+            ),
           const TeamSwitcherDropdown(),
-          const SizedBox(width: 20),
+          //3-dots menu to open task display settings
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: AppColors.muted),
+            tooltip: 'Display settings',
+            onPressed: _openSettings,
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: body,
