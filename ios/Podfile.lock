@@ -1272,6 +1272,31 @@ PODS:
     - FirebaseAuthInterop (~> 12.15.0)
     - FirebaseCore (~> 12.15.0)
     - FirebaseCoreExtension (~> 12.15.0)
+  - cloud_firestore (6.5.0):
+    - Firebase/Firestore (= 12.14.0)
+    - firebase_core
+    - Flutter
+  - Firebase/Auth (12.14.0):
+    - Firebase/CoreOnly
+    - FirebaseAuth (~> 12.14.0)
+  - Firebase/CoreOnly (12.14.0):
+    - FirebaseCore (~> 12.14.0)
+  - Firebase/Firestore (12.14.0):
+    - Firebase/CoreOnly
+    - FirebaseFirestore (~> 12.14.0)
+  - firebase_auth (6.5.2):
+    - Firebase/Auth (= 12.14.0)
+    - firebase_core
+    - Flutter
+  - firebase_core (4.10.0):
+    - Firebase/CoreOnly (= 12.14.0)
+    - Flutter
+  - FirebaseAppCheckInterop (12.14.0)
+  - FirebaseAuth (12.14.0):
+    - FirebaseAppCheckInterop (~> 12.14.0)
+    - FirebaseAuthInterop (~> 12.14.0)
+    - FirebaseCore (~> 12.14.0)
+    - FirebaseCoreExtension (~> 12.14.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
     - GoogleUtilities/Environment (~> 8.1)
     - GTMSessionFetcher/Core (< 6.0, >= 3.4)
