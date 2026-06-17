@@ -1202,6 +1202,8 @@ PODS:
   - BoringSSL-GRPC/Interface (0.0.37)
   - cloud_firestore (6.5.0):
     - Firebase/Firestore (= 12.14.0)
+  - cloud_firestore (6.5.0):
+    - Firebase/Firestore (= 12.14.0)
     - firebase_core
     - Flutter
   - DKImagePickerController/Core (4.3.9):
@@ -1250,12 +1252,17 @@ PODS:
     - Flutter
   - firebase_app_check (0.4.4-2):
     - Firebase/CoreOnly (~> 12.14.0)
+    - FirebaseFirestore (~> 12.14.0)
+  - firebase_auth (6.5.2):
+    - Firebase/Auth (= 12.14.0)
     - firebase_core
     - FirebaseAppCheck (~> 12.14.0)
     - Flutter
   - firebase_auth (6.5.2):
     - Firebase/Auth (= 12.14.0)
     - firebase_core
+  - firebase_core (4.10.0):
+    - Firebase/CoreOnly (= 12.14.0)
     - Flutter
   - firebase_core (4.10.0):
     - Firebase/CoreOnly (= 12.14.0)
@@ -1276,9 +1283,9 @@ PODS:
     - GoogleUtilities/Environment (~> 8.1)
     - GTMSessionFetcher/Core (< 6.0, >= 3.4)
     - RecaptchaInterop (~> 101.0)
-  - FirebaseAuthInterop (12.14.0)
-  - FirebaseCore (12.14.0):
-    - FirebaseCoreInternal (~> 12.14.0)
+  - FirebaseAuthInterop (12.13.0)
+  - FirebaseCore (12.13.0):
+    - FirebaseCoreInternal (~> 12.13.0)
     - GoogleUtilities/Environment (~> 8.1)
     - GoogleUtilities/Logger (~> 8.1)
   - FirebaseCoreExtension (12.14.0):
@@ -1508,6 +1515,19 @@ SPEC CHECKSUMS:
   firebase_auth: d4091ec40b52cc2ea56171ea521c30b388844acb
   firebase_core: 383e19b49a08df5d7a6cf5017616de6a357ed7af
   FirebaseAppCheck: 49d593026a7959280816e303fd27a3f732ccb9aa
+  FirebaseAppCheckInterop: f123c0261a7b46f060e98fc2961651f1ac68f384
+  FirebaseAuth: 01a77d472aec77ec008141e7d859d1b9cb8dc2cf
+  FirebaseAuthInterop: 63056ef7f9602e79a8f8d756d4cb35f38e2927c3
+  FirebaseCore: 4939b340b9c598dc1f965d68f8fe57e630b65407
+  FirebaseCoreExtension: ee3e3697acea1062288b1900bcdcab4d59ab93b4
+  FirebaseCoreInternal: 090369a5fffd7423cf88006ab4d2ccc2173a8db9
+  FirebaseFirestore: 7026cd6035af7c9f34066dfc7425cea01f96fa93
+  FirebaseFirestoreInternal: 5bd3585e6292ec5e8dc019a46f20d165de27fcd1
+  FirebaseSharedSwift: 7c659ebf23afdc1e60a05df72a07ad7349f5758f
+  cloud_firestore: 0b00f29ae2bb05adf7b0624b4aa883861a59761d
+  Firebase: 7cc10425300768ec86292688af5cb228f0604bde
+  firebase_auth: d4091ec40b52cc2ea56171ea521c30b388844acb
+  firebase_core: 383e19b49a08df5d7a6cf5017616de6a357ed7af
   FirebaseAppCheckInterop: f123c0261a7b46f060e98fc2961651f1ac68f384
   FirebaseAuth: 01a77d472aec77ec008141e7d859d1b9cb8dc2cf
   FirebaseAuthInterop: 63056ef7f9602e79a8f8d756d4cb35f38e2927c3
