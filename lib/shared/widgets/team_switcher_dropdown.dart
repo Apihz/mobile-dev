@@ -10,6 +10,93 @@ import '../../state/team_state.dart';
 class TeamSwitcherDropdown extends StatelessWidget {
   const TeamSwitcherDropdown({super.key});
 
+  // Show a dialog where the user enters a join code to join a team
+  void _showJoinTeamDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        String? error;
+        bool isLoading = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Join a Team'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Enter the join code shared by the team leader.',
+                    style: TextStyle(fontSize: 13, color: AppColors.muted),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      labelText: 'Join code',
+                      border: OutlineInputBorder(),
+                      hintText: 'e.g. 123456',
+                    ),
+                    maxLength: 6,
+                  ),
+                  if (error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(error!,
+                          style: const TextStyle(
+                              color: Colors.red, fontSize: 13)),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed:
+                      isLoading ? null : () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          final code = controller.text.trim();
+                          if (code.length < 6) {
+                            setDialogState(() =>
+                                error = 'Please enter a valid 6-digit code');
+                            return;
+                          }
+                          setDialogState(() {
+                            isLoading = true;
+                            error = null;
+                          });
+                          final result = await context
+                              .read<TeamState>()
+                              .joinByCode(code);
+                          if (!dialogContext.mounted) return;
+                          if (result != null) {
+                            setDialogState(() {
+                              error = result;
+                              isLoading = false;
+                            });
+                          } else {
+                            Navigator.pop(dialogContext);
+                          }
+                        },
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child:
+                              CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Join'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _openTeamSheet(BuildContext context, TeamState teamState) {
     showModalBottomSheet(
       context: context,
@@ -81,6 +168,18 @@ class TeamSwitcherDropdown extends StatelessWidget {
                     context,
                     MaterialPageRoute(builder: (_) => const CreateTeamScreen()),
                   );
+                },
+              ),
+              //join existing team option
+              ListTile(
+                leading: const Icon(Icons.login, color: AppColors.muted, size: 20),
+                title: const Text(
+                  'Join existing team',
+                  style: TextStyle(color: AppColors.muted),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _showJoinTeamDialog(context);
                 },
               ),
               const SizedBox(height: 8),
