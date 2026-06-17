@@ -1194,6 +1194,12 @@ PODS:
     - PromisesObjC (~> 2.4)
     - PromisesSwift (~> 2.4)
     - RecaptchaInterop (~> 101.0)
+  - AppCheckCore (11.3.0):
+    - GoogleUtilities/Environment (~> 8.0)
+    - GoogleUtilities/UserDefaults (~> 8.0)
+    - PromisesObjC (~> 2.4)
+    - PromisesSwift (~> 2.4)
+    - RecaptchaInterop (~> 101.0)
   - BoringSSL-GRPC (0.0.37):
     - BoringSSL-GRPC/Implementation (= 0.0.37)
     - BoringSSL-GRPC/Interface (= 0.0.37)
@@ -1252,6 +1258,13 @@ PODS:
     - Flutter
   - firebase_app_check (0.4.4-2):
     - Firebase/CoreOnly (~> 12.14.0)
+    - firebase_core
+    - FirebaseAppCheck (~> 12.14.0)
+    - Flutter
+  - firebase_ai (3.12.2):
+    - Flutter
+  - firebase_app_check (0.4.4-2):
+    - Firebase/CoreOnly (~> 12.14.0)
     - FirebaseFirestore (~> 12.14.0)
   - firebase_auth (6.5.2):
     - Firebase/Auth (= 12.14.0)
@@ -1264,6 +1277,12 @@ PODS:
   - firebase_core (4.10.0):
     - Firebase/CoreOnly (= 12.14.0)
     - Flutter
+  - FirebaseAppCheck (12.14.0):
+    - AppCheckCore (~> 11.0)
+    - FirebaseAppCheckInterop (~> 12.14.0)
+    - FirebaseCore (~> 12.14.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
   - firebase_core (4.10.0):
     - Firebase/CoreOnly (= 12.14.0)
     - Flutter
@@ -1512,6 +1531,8 @@ SPEC CHECKSUMS:
   Firebase: 7cc10425300768ec86292688af5cb228f0604bde
   firebase_ai: 2c7dfa07d87886558eddb3f567a77ff90cd6716e
   firebase_app_check: 8e7687f90a90463348be5e505a821501cc43fb32
+  firebase_ai: 2c7dfa07d87886558eddb3f567a77ff90cd6716e
+  firebase_app_check: 8e7687f90a90463348be5e505a821501cc43fb32
   firebase_auth: d4091ec40b52cc2ea56171ea521c30b388844acb
   firebase_core: 383e19b49a08df5d7a6cf5017616de6a357ed7af
   FirebaseAppCheck: 49d593026a7959280816e303fd27a3f732ccb9aa
@@ -1528,6 +1549,7 @@ SPEC CHECKSUMS:
   Firebase: 7cc10425300768ec86292688af5cb228f0604bde
   firebase_auth: d4091ec40b52cc2ea56171ea521c30b388844acb
   firebase_core: 383e19b49a08df5d7a6cf5017616de6a357ed7af
+  FirebaseAppCheck: 49d593026a7959280816e303fd27a3f732ccb9aa
   FirebaseAppCheckInterop: f123c0261a7b46f060e98fc2961651f1ac68f384
   FirebaseAuth: 01a77d472aec77ec008141e7d859d1b9cb8dc2cf
   FirebaseAuthInterop: 63056ef7f9602e79a8f8d756d4cb35f38e2927c3
