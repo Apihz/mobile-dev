@@ -135,6 +135,7 @@ class _BoardScreenState extends State<BoardScreen> {
     String status,
     String title,
     List<Task> allTasks,
+    Map<String, String> memberNames,
   ) {
     final columnTasks =
         _sortTasks(allTasks.where((t) => t.status == status).toList());
@@ -144,6 +145,7 @@ class _BoardScreenState extends State<BoardScreen> {
         status: status,
         title: title,
         tasks: columnTasks,
+        memberNames: memberNames,
         showPriority: _settings.showPriority,
         showDescription: _settings.showDescription,
         showDeadline: _settings.showDeadline,
@@ -254,6 +256,11 @@ class _BoardScreenState extends State<BoardScreen> {
       final String projectId = teamState.currentTeam!.id;
       final FirestoreService service = FirestoreService();
 
+      //map each members uid to their name so cards can show the assignee
+      final Map<String, String> memberNames = {
+        for (final m in teamState.members) m.uid: m.name
+      };
+
       body = StreamBuilder<List<Task>>(
         stream: service.watchTasks(projectId),
         builder: (context, snapshot) {
@@ -280,9 +287,9 @@ class _BoardScreenState extends State<BoardScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildColumn(context, projectId, service, 'todo',  'To Do', allTasks),
-                    _buildColumn(context, projectId, service, 'doing', 'Doing', allTasks),
-                    _buildColumn(context, projectId, service, 'done',  'Done',  allTasks),
+                    _buildColumn(context, projectId, service, 'todo',  'To Do', allTasks, memberNames),
+                    _buildColumn(context, projectId, service, 'doing', 'Doing', allTasks, memberNames),
+                    _buildColumn(context, projectId, service, 'done',  'Done',  allTasks, memberNames),
                   ],
                 ),
               ),

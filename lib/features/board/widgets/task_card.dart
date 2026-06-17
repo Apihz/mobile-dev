@@ -10,6 +10,8 @@ class TaskCard extends StatelessWidget {
   final bool showDescription;
   final bool showDeadline;
   final bool compact;
+  //name of the teammate this task is assigned to, null if nobody
+  final String? assigneeName;
 
   const TaskCard({
     super.key,
@@ -19,6 +21,7 @@ class TaskCard extends StatelessWidget {
     this.showDescription = true,
     this.showDeadline = true,
     this.compact = false,
+    this.assigneeName,
   });
 
   @override
@@ -87,17 +90,41 @@ class TaskCard extends StatelessWidget {
               ),
             ],
 
-            //only show the deadline if turned on and the task has one
-            if (showDeadline && task.deadline != null) ...[
+            if ((showDeadline && task.deadline != null) ||
+                assigneeName != null) ...[
               SizedBox(height: compact ? 10 : 20),
-              Row(
+              Wrap(
+                spacing: 12,
+                runSpacing: 6,
                 children: [
-                  const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.muted),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Due ${task.deadline!.day}/${task.deadline!.month}',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 12),
-                  ),
+                  if (showDeadline && task.deadline != null)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.calendar_today_outlined,
+                            size: 12, color: AppColors.muted),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Due ${task.deadline!.day}/${task.deadline!.month}',
+                          style: const TextStyle(
+                              color: AppColors.muted, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  if (assigneeName != null)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.person_outline,
+                            size: 12, color: AppColors.muted),
+                        const SizedBox(width: 4),
+                        Text(
+                          assigneeName!,
+                          style: const TextStyle(
+                              color: AppColors.muted, fontSize: 12),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ],

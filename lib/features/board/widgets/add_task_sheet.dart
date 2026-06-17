@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/task.dart';
+import '../../../models/team_member.dart';
 import '../../../state/team_state.dart';
 import '../services/firestore_service.dart';
+import 'option_picker_dialog.dart';
 
 class AddTaskSheet extends StatefulWidget {
   final String projectId;
@@ -28,10 +30,14 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
 
   late String _title;
   late String _description;
-  late String _priority;
+  String? _priority; //null until the user picks one
   late String _teamName;
   DateTime? _deadline;
   bool _isLoading = false;
+
+  //team members we can assign this task to, and who is picked
+  List<TeamMember> _members = [];
+  String? _assigneeId;
 
   @override
   void initState() {
@@ -39,10 +45,43 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     //prefill if editing
     _title = widget.editTask?.title ?? '';
     _description = widget.editTask?.description ?? '';
-    _priority = widget.editTask?.priority ?? 'medium';
+    _priority = widget.editTask?.priority;
     _deadline = widget.editTask?.deadline;
-    //read team name once when sheet opens, not during build
-    _teamName = context.read<TeamState>().currentTeam?.name ?? 'Unknown Team';
+    //read team info once when sheet opens
+    final teamState = context.read<TeamState>();
+    _teamName = teamState.currentTeam?.name ?? 'Unknown Team';
+    _members = teamState.members;
+    //default the assignee to the current user when creating a new task
+    _assigneeId = widget.editTask?.assigneeId ??
+        FirebaseAuth.instance.currentUser!.uid;
+  }
+
+  //find the name of the picked teammate to show on the button
+  String _assigneeName() {
+    for (final m in _members) {
+      if (m.uid == _assigneeId) return m.name;
+    }
+    return 'Unassigned';
+  }
+
+  //pick which teammate the task goes to, using the blurred dialog
+  Future<void> _pickAssignee() async {
+    final options = _members
+        .map((m) => PickerOption(
+              value: m.uid,
+              label: m.name,
+              icon: Icons.person_outline,
+            ))
+        .toList();
+
+    final picked = await OptionPickerDialog.show(
+      context,
+      title: 'Assign to',
+      options: options,
+      selectedValue: _assigneeId,
+    );
+
+    if (picked != null) setState(() => _assigneeId = picked);
   }
 
   Future<void> _submit() async {
@@ -59,19 +98,19 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
           {
             'title': _title,
             'description': _description,
-            'priority': _priority,
+            'priority': _priority ?? 'medium',
             'deadline': _deadline,
+            'assigneeId': _assigneeId,
           },
         );
       } else {
-        final uid = FirebaseAuth.instance.currentUser!.uid;
         final task = Task(
           id: '',
           title: _title,
           description: _description,
           status: widget.initialStatus,
-          priority: _priority,
-          assigneeId: uid,
+          priority: _priority ?? 'medium',
+          assigneeId: _assigneeId,
           deadline: _deadline,
           createdAt: DateTime.now(),
         );
@@ -87,6 +126,28 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
         );
       }
     }
+  }
+
+  //label shown on the priority chip
+  String _priorityLabel() {
+    if (_priority == null) return 'Priority';
+    return _priority![0].toUpperCase() + _priority!.substring(1);
+  }
+
+  //pick the priority using the blurred dialog
+  Future<void> _pickPriority() async {
+    final picked = await OptionPickerDialog.show(
+      context,
+      title: 'Priority',
+      selectedValue: _priority,
+      options: [
+        PickerOption(value: 'low', label: 'Low', color: TaskColors.priority('low')),
+        PickerOption(value: 'medium', label: 'Medium', color: TaskColors.priority('medium')),
+        PickerOption(value: 'high', label: 'High', color: TaskColors.priority('high')),
+      ],
+    );
+
+    if (picked != null) setState(() => _priority = picked);
   }
 
   Future<void> _pickDeadline() async {
@@ -248,31 +309,46 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                 decoration: const BoxDecoration(
                   border: Border(top: BorderSide(color: AppColors.border)),
                 ),
-                child: Row(
-                  children: [
-                    //priority buttons
-                    _PriorityButton(
-                      label: 'Low',
-                      color: const Color(0xFF4DC98A),
-                      selected: _priority == 'low',
-                      onTap: () => setState(() => _priority = 'low'),
-                    ),
-                    const SizedBox(width: 8),
-                    _PriorityButton(
-                      label: 'Medium',
-                      color: const Color(0xFFE8A44A),
-                      selected: _priority == 'medium',
-                      onTap: () => setState(() => _priority = 'medium'),
-                    ),
-                    const SizedBox(width: 8),
-                    _PriorityButton(
-                      label: 'High',
-                      color: const Color(0xFFFF8585),
-                      selected: _priority == 'high',
-                      onTap: () => setState(() => _priority = 'high'),
+                //scroll sideways so the pills never overflow the screen if name it stoo long
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      //priority picker 
+                      GestureDetector(
+                        onTap: _pickPriority,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.border),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.flag_outlined,
+                              size: 14,
+                              color: _priority == null
+                                  ? AppColors.muted
+                                  : TaskColors.priority(_priority!),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _priorityLabel(),
+                              style: TextStyle(
+                                color: _priority == null
+                                    ? AppColors.muted
+                                    : TaskColors.priority(_priority!),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
 
-                    const Spacer(),
+                    const SizedBox(width: 8),
 
                     //deadline picker
                     GestureDetector(
@@ -312,53 +388,48 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                         ),
                       ),
                     ),
-                  ],
+
+                    const SizedBox(width: 8),
+
+                    //assignee picker
+                      GestureDetector(
+                        onTap: _members.isEmpty ? null : _pickAssignee,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.border),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            //hug the content so the pill only takes the space it needs
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.person_outline,
+                                  size: 14, color: AppColors.muted),
+                              const SizedBox(width: 6),
+                              Text(
+                                _assigneeName(),
+                                style: const TextStyle(
+                                  color: AppColors.onSurface,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.keyboard_arrow_down,
+                                  size: 16, color: AppColors.muted),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
             ],
           ),
         ),
-    );
-  }
-}
-
-//small priority toggle button
-class _PriorityButton extends StatelessWidget {
-  final String label;
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _PriorityButton({
-    required this.label,
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? color : AppColors.border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? color : AppColors.muted,
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
-      ),
     );
   }
 }
