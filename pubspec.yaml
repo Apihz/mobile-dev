@@ -42,6 +42,9 @@ dependencies:
   intl: ^0.20.2
   table_calendar: ^3.2.0
   expansion_card: ^1.0.1
+  firebase_ai: ^3.12.2
+  firebase_app_check: ^0.4.4+2
+  file_picker: ^11.0.2
 
 dev_dependencies:
   flutter_test:
