@@ -11,8 +11,6 @@ import '../../../state/team_state.dart';
 import '../services/ai_extract_service.dart';
 import 'ai_preview_screen.dart';
 
-/// Entry screen for AI task extraction: pick a PDF or paste text, choose the
-/// overall start date + deadline, then extract.
 class AiImportScreen extends StatefulWidget {
   final String projectId;
 
@@ -47,7 +45,7 @@ class _AiImportScreenState extends State<AiImportScreen> {
     );
     final file = result?.files.single;
     if (file?.bytes == null) return;
-    // Keep PDFs modest — they are sent inline (no Cloud Storage on Spark).
+    // Keep PDFs modest
     if (file!.bytes!.lengthInBytes > 15 * 1024 * 1024) {
       _showError('That PDF is too large (max ~15 MB). Try a smaller file.');
       return;

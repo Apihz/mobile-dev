@@ -10,8 +10,6 @@ import '../../../models/team_member.dart';
 /// Uses Firebase AI Logic (Gemini Developer API, free Spark tier) to turn an
 /// assignment/GP brief (PDF or pasted text) into a structured list of tasks.
 class AiExtractService {
-  // Confirm/upgrade the exact model id in the Firebase AI Logic console.
-  // (Gemini 2.0 Flash was retired Jun 1 2026 — use a current Flash model.)
   static const String _modelId = 'gemini-2.5-flash';
 
   static final DateFormat _ymd = DateFormat('yyyy-MM-dd');
@@ -60,66 +58,177 @@ class AiExtractService {
     final memberNames = members.map((m) => m.name).toList();
 
    final prompt = '''
-You are an academic project planner who helps university students turn an
-assignment or group-project brief into a realistic, student-friendly task plan.
-The brief is provided below and/or in the attached PDF.
+You are an experienced university student and project coordinator.
 
-Plan the way a real student team works: limited time, mixed skill levels, and
-work split across people by report sections, research topics, implementation
-modules, testing duties, presentation slides, and documentation. Aim for a
-timeline a lecturer would expect to see in a student project, not a corporate
-software sprint.
+Your job is to read an assignment brief, project description, report requirement,
+or group project specification and convert it into a realistic set of tasks that
+a student team would actually divide among themselves.
 
-WHAT TO EXTRACT
-- Only output tasks that are present in or clearly implied by the brief. Do not
-  invent scope that is not there.
-- Infer the common academic subtasks a brief like this normally requires, even
-  when not spelled out, as long as they are strongly implied.
-- Break each major deliverable into a few concrete "subtasks" (aim for 2 to 5).
-- Avoid trivial micro-tasks, and avoid artificial project-management busywork
-  that students would not actually do (no ticket boards, no daily stand-ups, no
-  sprint ceremonies).
+IMPORTANT
 
-PICK THE RIGHT WORKFLOW FOR THE BRIEF
-- If this is a programming or system project, cover the natural phases where
-  relevant: requirement analysis, design, implementation broken down by module,
-  testing and debugging, documentation, and demo or presentation prep.
-- If this is a research or report assignment, cover the natural phases where
-  relevant: understanding the topic, literature review and information
-  gathering, outlining, drafting by section, editing, citation and reference
-  checking, proofreading, and presentation prep.
-- Most group projects also benefit from: a kickoff discussion to divide the
-  work, at least one progress check or internal group review, a lecturer or
-  supervisor consultation if the brief implies one, a revision round after
-  feedback, and final submission preparation. Include these only when they fit.
+Think like a real student group.
 
-MILESTONES
-- Represent key checkpoints as their own tasks so they land on the timeline, for
-  example proposal complete, progress checkpoint, full draft or build complete,
-  presentation ready, and final submission. Give milestone tasks high priority.
+Do NOT generate generic project-management phases such as:
+- Requirement Analysis
+- System Design
+- Implementation
+- Testing
+- Documentation
 
-DEPENDENCIES AND SCHEDULING
-- Order tasks by dependency: plan and understand first, then research or
-  analysis, then implementation or drafting, then testing or editing, then
-  presentation, then final submission. Dependent tasks should start only after
-  their prerequisites.
-- Set each "startDate" and "deadline" as YYYY-MM-DD strictly within
-  ${_ymd.format(startDate)} to ${_ymd.format(deadline)}. Spread tasks across the
-  whole range and leave a short buffer before the final deadline for revision
-  and submission prep.
+unless those exact deliverables are explicitly required by the brief.
 
-WORKLOAD AND ASSIGNEES
-- Balance the work fairly across the team. Set "suggestedAssignee" to one of
-  these member names, distributing tasks roughly evenly and keeping related work
-  with the same person where it makes sense: ${memberNames.isEmpty ? '(no members)' : memberNames.join(', ')}.
-  Leave it empty when there is no sensible owner or when there are no members.
+Instead, identify the actual work students would perform to complete the
+assignment successfully.
 
-PRIORITY
-- Use high for milestones, blocking tasks, and anything on the critical path.
-  Use medium for normal deliverable work. Use low for polish, optional, or
-  nice-to-have items.
+TASK GENERATION RULES
 
-Return JSON that matches the provided schema.
+1. Extract all required deliverables from the brief.
+
+Examples:
+- Report
+- Research paper
+- Literature review
+- Presentation slides
+- Prototype
+- Mobile application
+- Website
+- Database
+- Experiment
+- Survey
+- Case study
+- Demo video
+
+2. Convert deliverables into realistic work packages.
+
+BAD TASKS:
+- Do research
+- Do testing
+- Write report
+- Implementation
+
+GOOD TASKS:
+- Research blockchain applications in healthcare
+- Collect references for literature review
+- Write Introduction section
+- Design ERD and database schema
+- Develop authentication module
+- Implement tournament scheduling feature
+- Conduct user testing with 5 participants
+- Analyse experimental results
+- Prepare presentation slides
+- Rehearse presentation
+
+3. Split large deliverables into logical subtasks.
+
+For reports:
+- Introduction
+- Literature Review
+- Methodology
+- Results
+- Discussion
+- Conclusion
+
+For software projects:
+- Database
+- Backend APIs
+- Authentication
+- Core features
+- Testing
+- Deployment
+
+For research projects:
+- Topic research
+- Source collection
+- Draft writing
+- Analysis
+- Editing
+- Referencing
+
+4. Generate tasks that can realistically be assigned to different team members.
+
+Each task should:
+- Have a clear outcome
+- Be independently completable
+- Represent meaningful work
+- Usually take between a few hours and several days
+
+Avoid tiny micro-tasks.
+
+5. Include milestone tasks when appropriate.
+
+Examples:
+- Proposal completed
+- Research completed
+- First draft completed
+- Prototype completed
+- Slides completed
+- Final submission ready
+
+Milestones should be high priority.
+
+SCHEDULING RULES
+
+Schedule tasks strictly between:
+
+START DATE:
+${_ymd.format(startDate)}
+
+END DATE:
+${_ymd.format(deadline)}
+
+Requirements:
+- Respect task dependencies.
+- Earlier tasks should enable later tasks.
+- Spread work throughout the timeline.
+- Avoid placing everything near the deadline.
+- Leave at least 1–3 days before the final deadline for revisions and submission preparation.
+- Milestones should appear at meaningful checkpoints.
+
+ASSIGNEE RULES
+
+Available team members:
+
+${memberNames.isEmpty ? '(no members)' : memberNames.join(', ')}
+
+Assign work realistically:
+- Distribute workload fairly.
+- Keep related tasks with the same member when reasonable.
+- Assign report sections to different members when appropriate.
+- Assign implementation modules to different members when appropriate.
+- Return an empty string if no sensible assignee exists.
+
+PRIORITY RULES
+
+HIGH:
+- Major deliverables
+- Blocking tasks
+- Milestones
+- Critical-path work
+
+MEDIUM:
+- Standard assignment work
+
+LOW:
+- Final polish
+- Optional improvements
+- Nice-to-have enhancements
+
+OUTPUT QUALITY REQUIREMENTS
+
+Before creating tasks:
+
+1. Determine the project type.
+2. Identify all deliverables.
+3. Identify required report sections.
+4. Identify required implementation modules.
+5. Identify required presentations or demonstrations.
+6. Identify grading-related activities if mentioned.
+
+Then generate tasks.
+
+Every generated task must represent a concrete deliverable or work package that a student team would naturally assign to a person.
+
+Return ONLY valid JSON matching the provided schema.
 ''';
 
     final parts = <Part>[TextPart(prompt)];
