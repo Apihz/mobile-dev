@@ -9,6 +9,7 @@ import '../../../features/auth/services/auth_service.dart';
 import '../../../models/task.dart';
 import '../../../shared/widgets/team_switcher_dropdown.dart';
 import '../../../state/team_state.dart';
+import '../../ai_import/screens/ai_import_screen.dart';
 import '../../team/screens/create_team_screen.dart';
 import '../board_display_settings.dart';
 import '../services/firestore_service.dart';
@@ -327,6 +328,19 @@ class _BoardScreenState extends State<BoardScreen> {
           ],
         ),
         actions: [
+          if (teamState.currentTeam != null)
+            IconButton(
+              tooltip: 'AI task import',
+              icon: const Icon(Icons.auto_awesome),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AiImportScreen(
+                    projectId: teamState.currentTeam!.id,
+                  ),
+                ),
+              ),
+            ),
           const TeamSwitcherDropdown(),
           //3-dots menu to open task display settings
           IconButton(
