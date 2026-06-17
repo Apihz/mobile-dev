@@ -11,6 +11,8 @@ import 'package:flutter_app_1/state/team_state.dart';
 import 'package:flutter_app_1/features/board/services/firestore_service.dart';
 import 'package:flutter_app_1/features/board/screens/task_detail_screen.dart';
 import 'package:flutter_app_1/features/board/widgets/add_task_sheet.dart';
+// Integrated your shared interactive workspace components
+import 'package:flutter_app_1/shared/widgets/team_switcher_dropdown.dart'; 
 
 class PlannerScreen extends StatefulWidget {
   const PlannerScreen({super.key});
@@ -59,6 +61,23 @@ class _PlannerScreenState extends State<PlannerScreen> {
     if (teamState.currentTeam == null) {
       return Scaffold(
         backgroundColor: specBackground,
+        appBar: AppBar(
+          backgroundColor: specBackground,
+          elevation: 0,
+          toolbarHeight: 70,
+          title: Text(
+            'Daily Planner',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 24, 
+              fontWeight: FontWeight.w700, 
+              color: Colors.white
+            ),
+          ),
+          actions: const [
+            TeamSwitcherDropdown(),
+            SizedBox(width: 16),
+          ],
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -89,47 +108,38 @@ class _PlannerScreenState extends State<PlannerScreen> {
         backgroundColor: specBackground,
         elevation: 0,
         toolbarHeight: 70,
-        title: Text(
-          'Daily Planner',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 26, 
-            fontWeight: FontWeight.w700, 
-            color: Colors.white, 
-            letterSpacing: -0.5
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => AddTaskSheet(
-                    projectId: projectId,
-                    initialStatus: 'todo',
-                  ),
-                );
-              },
-              icon: const Icon(Icons.add, size: 16, color: Colors.white),
-              label: Text(
-                'New Task',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: specButtonColor,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Daily Planner',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 22, 
+                fontWeight: FontWeight.w700, 
+                color: Colors.white, 
+                letterSpacing: -0.5
               ),
             ),
-          )
+            const SizedBox(height: 2),
+            Text(
+              'Track upcoming deadlines',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12, 
+                color: specMutedText, 
+                fontWeight: FontWeight.w400
+              ),
+            ),
+          ],
+        ),
+        actions: const [
+          // Embedded your functional workspace management switch drop panel
+          TeamSwitcherDropdown(),
+          SizedBox(width: 16),
         ],
       ),
       body: StreamBuilder<List<Task>>(
-        stream: service.watchTasks(projectId),
+        stream: service.watchTasks(projectId), //
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -284,6 +294,25 @@ class _PlannerScreenState extends State<PlannerScreen> {
           );
         },
       ),
+      // Transformed the action layout to match BoardScreen using full Floating Action Buttons
+      floatingActionButton: teamState.currentTeam != null
+          ? FloatingActionButton(
+              backgroundColor: specButtonColor,
+              foregroundColor: Colors.white,
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => AddTaskSheet(
+                    projectId: projectId,
+                    initialStatus: 'todo', //
+                  ),
+                );
+              },
+              child: const Icon(Icons.add, size: 24),
+            )
+          : null,
     );
   }
 
@@ -362,7 +391,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => TaskDetailScreen(task: task, projectId: projectId),
+                  builder: (_) => TaskDetailScreen(task: task, projectId: projectId), //
                 ),
               );
             },
