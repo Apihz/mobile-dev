@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 
+
 import 'app.dart';
 import 'firebase_options.dart';
 
@@ -11,11 +12,10 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await FirebaseAppCheck.instance.activate(
+    providerAndroid: AndroidDebugProvider(),
+  );
 
-  // App Check protects the Firebase AI Logic (Gemini) endpoint from abuse.
-  // It's skipped in debug builds (e.g. the iOS Simulator, where attestation
-  // fails) — that's fine because the AI Logic API is left "unenforced" during
-  // development. Release builds activate it with real attestation providers.
   if (kReleaseMode) {
     await FirebaseAppCheck.instance.activate(
       providerAndroid: AndroidPlayIntegrityProvider(),
