@@ -65,7 +65,7 @@ class _BoardScreenState extends State<BoardScreen> {
           return false;
         },
         onLeave: (_) => _stopScrolling(),
-        builder: (_, __, ___) => const SizedBox.expand(),
+        builder: (_, _, _) => const SizedBox.expand(),
       ),
     );
   }
