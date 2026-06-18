@@ -10,6 +10,7 @@ import '../../../state/team_state.dart';
 import '../services/team_service.dart';
 import '../widgets/add_member_sheet.dart';
 import '../widgets/member_card.dart';
+import '../../../shared/widgets/team_switcher_dropdown.dart';
 
 class TeamScreen extends StatefulWidget {
   const TeamScreen({super.key});
@@ -36,8 +37,7 @@ class _TeamScreenState extends State<TeamScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.groups_outlined,
-                size: 64, color: AppColors.muted),
+            const Icon(Icons.groups_outlined, size: 64, color: AppColors.muted),
             const SizedBox(height: 16),
             const Text(
               'No team selected',
@@ -65,6 +65,7 @@ class _TeamScreenState extends State<TeamScreen> {
       appBar: AppBar(
         title: Text(team.name),
         centerTitle: false,
+        actions: const [TeamSwitcherDropdown(), SizedBox(width: 16)],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,8 +91,7 @@ class _TeamScreenState extends State<TeamScreen> {
                 const SizedBox(width: 8),
                 Text(
                   '(${teamState.members.length})',
-                  style:
-                      const TextStyle(color: AppColors.muted, fontSize: 14),
+                  style: const TextStyle(color: AppColors.muted, fontSize: 14),
                 ),
               ],
             ),
@@ -109,10 +109,11 @@ class _TeamScreenState extends State<TeamScreen> {
                   padding: const EdgeInsets.only(bottom: 16),
                   itemCount: teamState.members.length,
                   itemBuilder: (context, index) {
-                    final TeamMember member =
-                        teamState.members[index];
+                    final TeamMember member = teamState.members[index];
                     final stats = TeamService.computeTaskStats(
-                        tasks, member.uid);
+                      tasks,
+                      member.uid,
+                    );
 
                     return MemberCard(
                       member: member,
@@ -283,10 +284,10 @@ class _TeamScreenState extends State<TeamScreen> {
           if (user == null) return;
 
           context.read<TeamState>().sendJoinRequest(
-                user.uid,
-                user.email?.split('@').first ?? 'Member',
-                user.email ?? '',
-              );
+            user.uid,
+            user.email?.split('@').first ?? 'Member',
+            user.email ?? '',
+          );
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
