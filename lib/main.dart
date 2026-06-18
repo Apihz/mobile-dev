@@ -12,9 +12,6 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await FirebaseAppCheck.instance.activate(
-    providerAndroid: AndroidDebugProvider(),
-  );
 
   if (kReleaseMode) {
     await FirebaseAppCheck.instance.activate(

@@ -7,6 +7,7 @@ import '../../../models/task.dart';
 import '../../../models/team_member.dart';
 import '../../../state/team_state.dart';
 import '../../board/services/firestore_service.dart';
+import '../../board/widgets/option_picker_dialog.dart';
 
 /// Review/edit the AI-proposed tasks before saving them to the board.
 class AiPreviewScreen extends StatefulWidget {
@@ -254,6 +255,8 @@ class _MetaChip extends StatelessWidget {
 }
 
 /// Bottom sheet to edit a single proposed task.
+/// Mirrors the look of the board's [AddTaskSheet] so editing an AI task
+/// feels identical to editing a real one.
 class _EditTaskSheet extends StatefulWidget {
   final Task task;
   final List<TeamMember> members;
@@ -265,39 +268,86 @@ class _EditTaskSheet extends StatefulWidget {
 }
 
 class _EditTaskSheetState extends State<_EditTaskSheet> {
-  late TextEditingController _title;
-  late TextEditingController _description;
-  late String _priority;
+  final _formKey = GlobalKey<FormState>();
+
+  late String _title;
+  late String _description;
+  String? _priority;
   late String? _assigneeId;
-  late DateTime? _startDate;
-  late DateTime? _deadline;
+  DateTime? _startDate;
+  DateTime? _deadline;
   late List<String> _subtasks;
-  static final _ymd = DateFormat('d MMM yyyy');
+
+  late String _teamName;
 
   @override
   void initState() {
     super.initState();
-    _title = TextEditingController(text: widget.task.title);
-    _description = TextEditingController(text: widget.task.description);
+    _title = widget.task.title;
+    _description = widget.task.description;
     _priority = widget.task.priority;
     _assigneeId = widget.task.assigneeId;
     _startDate = widget.task.startDate;
     _deadline = widget.task.deadline;
     _subtasks = List<String>.from(widget.task.subtasks);
+    _teamName = context.read<TeamState>().currentTeam?.name ?? 'Unknown Team';
   }
 
-  @override
-  void dispose() {
-    _title.dispose();
-    _description.dispose();
-    super.dispose();
+  //find the name of the picked teammate to show on the pill
+  String _assigneeName() {
+    for (final m in widget.members) {
+      if (m.uid == _assigneeId) return m.name;
+    }
+    return 'Unassigned';
+  }
+
+  //label shown on the priority pill
+  String _priorityLabel() {
+    if (_priority == null) return 'Priority';
+    return _priority![0].toUpperCase() + _priority!.substring(1);
+  }
+
+  //pick which teammate the task goes to, using the blurred dialog
+  Future<void> _pickAssignee() async {
+    final options = widget.members
+        .map((m) => PickerOption(
+              value: m.uid,
+              label: m.name,
+              icon: Icons.person_outline,
+            ))
+        .toList();
+
+    final picked = await OptionPickerDialog.show(
+      context,
+      title: 'Assign to',
+      options: options,
+      selectedValue: _assigneeId,
+    );
+
+    if (picked != null) setState(() => _assigneeId = picked);
+  }
+
+  //pick the priority using the blurred dialog
+  Future<void> _pickPriority() async {
+    final picked = await OptionPickerDialog.show(
+      context,
+      title: 'Priority',
+      selectedValue: _priority,
+      options: [
+        PickerOption(value: 'low', label: 'Low', color: TaskColors.priority('low')),
+        PickerOption(value: 'medium', label: 'Medium', color: TaskColors.priority('medium')),
+        PickerOption(value: 'high', label: 'High', color: TaskColors.priority('high')),
+      ],
+    );
+
+    if (picked != null) setState(() => _priority = picked);
   }
 
   Future<void> _pickDate({required bool isStart}) async {
     final base = isStart ? _startDate : _deadline;
     final picked = await showDatePicker(
       context: context,
-      initialDate: base ?? DateTime.now(),
+      initialDate: base ?? DateTime.now().add(const Duration(days: 1)),
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 730)),
     );
@@ -312,12 +362,15 @@ class _EditTaskSheetState extends State<_EditTaskSheet> {
   }
 
   void _save() {
+    if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
+
     Navigator.pop(
       context,
       widget.task.copyWith(
-        title: _title.text.trim(),
-        description: _description.text.trim(),
-        priority: _priority,
+        title: _title,
+        description: _description,
+        priority: _priority ?? 'medium',
         assigneeId: _assigneeId,
         startDate: _startDate,
         deadline: _deadline,
@@ -328,199 +381,350 @@ class _EditTaskSheetState extends State<_EditTaskSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
-      padding: EdgeInsets.fromLTRB(
-          20, 16, 20, 16 + MediaQuery.of(context).viewInsets.bottom),
+      height: MediaQuery.of(context).size.height * 0.92,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       decoration: const BoxDecoration(
         color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close, color: AppColors.muted),
-              ),
-              const Spacer(),
-              const Text('Edit task',
-                  style: TextStyle(
-                      color: AppColors.onSurface,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600)),
-              const Spacer(),
-              IconButton(
-                onPressed: _save,
-                icon: const Icon(Icons.check, color: AppColors.primary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: ListView(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
               children: [
-                _field('Title', _title),
-                const SizedBox(height: 12),
-                _field('Description', _description, maxLines: 3),
-                const SizedBox(height: 16),
-                const Text('Priority',
-                    style: TextStyle(color: AppColors.muted, fontSize: 13)),
-                const SizedBox(height: 8),
-                Row(
-                  children: ['low', 'medium', 'high'].map((p) {
-                    final selected = _priority == p;
-                    final color = TaskColors.priority(p);
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(p),
-                        selected: selected,
-                        selectedColor: color.withValues(alpha: 0.2),
-                        onSelected: (_) => setState(() => _priority = p),
+                //X button — closes the sheet
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 55,
+                    height: 55,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const Icon(Icons.close,
+                        size: 22, color: AppColors.muted),
+                  ),
+                ),
+
+                const Spacer(),
+
+                //team badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.groups_outlined, size: 20, color: AppColors.muted),
+                      const SizedBox(width: 8),
+                      Text(
+                        _teamName,
+                        style: const TextStyle(
+                          color: AppColors.onSurface,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    );
-                  }).toList(),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _dateButton(
-                          'Start',
-                          _startDate == null ? '—' : _ymd.format(_startDate!),
-                          () => _pickDate(isStart: true)),
+
+                const Spacer(),
+
+                //tick button to save the changes
+                GestureDetector(
+                  onTap: _save,
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _dateButton(
-                          'Deadline',
-                          _deadline == null ? '—' : _ymd.format(_deadline!),
-                          () => _pickDate(isStart: false)),
-                    ),
-                  ],
+                    child: const Icon(Icons.check,
+                        size: 22, color: AppColors.background),
+                  ),
                 ),
-                const SizedBox(height: 16),
-                const Text('Assignee',
-                    style: TextStyle(color: AppColors.muted, fontSize: 13)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String?>(
-                  initialValue: _assigneeId,
-                  dropdownColor: AppColors.surfaceElevated,
-                  decoration: _inputDecoration(),
-                  items: [
-                    const DropdownMenuItem<String?>(
-                        value: null, child: Text('Unassigned')),
-                    ...widget.members.map((m) => DropdownMenuItem<String?>(
-                          value: m.uid,
-                          child: Text(m.name),
-                        )),
-                  ],
-                  onChanged: (v) => setState(() => _assigneeId = v),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Text('Subtasks',
-                        style: TextStyle(color: AppColors.muted, fontSize: 13)),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: () => setState(() => _subtasks.add('')),
-                      icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Add'),
-                    ),
-                  ],
-                ),
-                ..._subtasks.asMap().entries.map((e) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            initialValue: e.value,
-                            style: const TextStyle(color: AppColors.onSurface),
-                            decoration: _inputDecoration(hint: 'Subtask'),
-                            onChanged: (v) => _subtasks[e.key] = v,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () =>
-                              setState(() => _subtasks.removeAt(e.key)),
-                          icon: const Icon(Icons.close,
-                              size: 18, color: AppColors.muted),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _field(String label, TextEditingController controller,
-      {int maxLines = 1}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 13)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          maxLines: maxLines,
-          style: const TextStyle(color: AppColors.onSurface),
-          decoration: _inputDecoration(),
-        ),
-      ],
-    );
-  }
+            const SizedBox(height: 32),
 
-  Widget _dateButton(String label, String value, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: const TextStyle(color: AppColors.muted, fontSize: 11)),
-            const SizedBox(height: 4),
-            Text(value,
-                style: const TextStyle(
-                    color: AppColors.onSurface, fontSize: 14)),
+            //scrollable note area
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      initialValue: _title,
+                      decoration: const InputDecoration(
+                        hintText: 'Title',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(color: AppColors.muted),
+                      ),
+                      style: const TextStyle(
+                        color: AppColors.onSurface,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      autofocus: true,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a title';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) => _title = value!.trim(),
+                    ),
+
+                    TextFormField(
+                      initialValue: _description,
+                      decoration: const InputDecoration(
+                        hintText: 'Add description...',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(color: AppColors.muted),
+                      ),
+                      style: const TextStyle(
+                        color: AppColors.onSurface,
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
+                      maxLines: null,
+                      onSaved: (value) => _description = value?.trim() ?? '',
+                    ),
+
+                    //subtasks — kept from the AI flow, styled to match the sheet
+                    if (_subtasks.isNotEmpty) const SizedBox(height: 16),
+                    ..._subtasks.asMap().entries.map((e) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_box_outline_blank,
+                                size: 18, color: AppColors.muted),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextFormField(
+                                initialValue: e.value,
+                                style: const TextStyle(
+                                    color: AppColors.onSurface, fontSize: 15),
+                                decoration: const InputDecoration(
+                                  hintText: 'Subtask',
+                                  isDense: true,
+                                  border: InputBorder.none,
+                                  hintStyle: TextStyle(color: AppColors.muted),
+                                ),
+                                onChanged: (v) => _subtasks[e.key] = v,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () =>
+                                  setState(() => _subtasks.removeAt(e.key)),
+                              child: const Icon(Icons.close,
+                                  size: 16, color: AppColors.muted),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => setState(() => _subtasks.add('')),
+                        icon: const Icon(Icons.add, size: 16, color: AppColors.muted),
+                        label: const Text('Add subtask',
+                            style: TextStyle(color: AppColors.muted)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            //pinned bar that floats above keyboard
+            Container(
+              padding: EdgeInsets.only(
+                top: 12,
+                bottom: 18 + keyboardHeight,
+              ),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.border)),
+              ),
+              //scroll sideways so the pills never overflow the screen
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    //priority picker
+                    GestureDetector(
+                      onTap: _pickPriority,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.border),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.flag_outlined,
+                              size: 14,
+                              color: _priority == null
+                                  ? AppColors.muted
+                                  : TaskColors.priority(_priority!),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _priorityLabel(),
+                              style: TextStyle(
+                                color: _priority == null
+                                    ? AppColors.muted
+                                    : TaskColors.priority(_priority!),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    //start date picker
+                    GestureDetector(
+                      onTap: () => _pickDate(isStart: true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.border),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.play_arrow_outlined,
+                                size: 14, color: AppColors.muted),
+                            const SizedBox(width: 6),
+                            Text(
+                              _startDate != null
+                                  ? '${_startDate!.day}/${_startDate!.month}'
+                                  : 'Start',
+                              style: TextStyle(
+                                color: _startDate != null
+                                    ? AppColors.onSurface
+                                    : AppColors.muted,
+                                fontSize: 13,
+                              ),
+                            ),
+                            if (_startDate != null) ...[
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: () => setState(() => _startDate = null),
+                                child: const Icon(Icons.close,
+                                    size: 14, color: AppColors.muted),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    //deadline picker
+                    GestureDetector(
+                      onTap: () => _pickDate(isStart: false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.border),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today_outlined,
+                                size: 14, color: AppColors.muted),
+                            const SizedBox(width: 6),
+                            Text(
+                              _deadline != null
+                                  ? '${_deadline!.day}/${_deadline!.month}'
+                                  : 'Deadline',
+                              style: TextStyle(
+                                color: _deadline != null
+                                    ? AppColors.onSurface
+                                    : AppColors.muted,
+                                fontSize: 13,
+                              ),
+                            ),
+                            if (_deadline != null) ...[
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: () => setState(() => _deadline = null),
+                                child: const Icon(Icons.close,
+                                    size: 14, color: AppColors.muted),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    //assignee picker
+                    GestureDetector(
+                      onTap: widget.members.isEmpty ? null : _pickAssignee,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.border),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          //hug the content so the pill only takes the space it needs
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.person_outline,
+                                size: 14, color: AppColors.muted),
+                            const SizedBox(width: 6),
+                            Text(
+                              _assigneeName(),
+                              style: const TextStyle(
+                                color: AppColors.onSurface,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.keyboard_arrow_down,
+                                size: 16, color: AppColors.muted),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration({String? hint}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.muted),
-      isDense: true,
-      filled: true,
-      fillColor: AppColors.surface,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
       ),
     );
   }
