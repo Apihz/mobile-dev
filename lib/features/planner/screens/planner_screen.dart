@@ -25,7 +25,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
-  // Exact color values mapped directly from your group's design specifications
   static const Color specBackground = Color(0xFF131315); // background
   static const Color specSurface = Color(0xFF131315);    // surface
   static const Color specCardBg = Color(0xFF0E0E10);      // surface-container-lowest
@@ -133,7 +132,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
           ],
         ),
         actions: const [
-          // Embedded your functional workspace management switch drop panel
           TeamSwitcherDropdown(),
           SizedBox(width: 16),
         ],
@@ -294,7 +292,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
           );
         },
       ),
-      // Transformed the action layout to match BoardScreen using full Floating Action Buttons
       floatingActionButton: teamState.currentTeam != null
           ? FloatingActionButton(
               backgroundColor: specButtonColor,
