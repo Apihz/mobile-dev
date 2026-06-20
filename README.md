@@ -1,17 +1,155 @@
-# flutter_app_1
+# KanbanBoard
 
-A new Flutter project.
+**Group Name:** Coselaw
 
-## Getting Started
+**Repo:** https://github.com/Apihz/mobile-dev.git
 
-This project is a starting point for a Flutter application.
+### Group Members
 
-A few resources to get you started if this is your first Flutter project:
+| Name | Matric No | Assigned Tasks |
+|---|---|---|
+| Muhammad Hafiz Bin Mohd Khairulariman | 2314629 | Firebase setup, Authentication, Board page, AI task import |
+| _<name>_ | _<matric no>_ | _<tasks>_ |
+| _<name>_ | _<matric no>_ | _<tasks>_ |
+| _<name>_ | _<matric no>_ | _<tasks>_ |
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Introduction
+
+KanbanBoard is a task management app built with Flutter. The idea behind it is simple, instead of keeping your tasks in your head, scattered across chat messages, or in a plain notes app, you put them on a board with three columns (To Do, Doing, Done) and just drag the cards across as the work moves forward. Everything is connected to Firebase, so tasks are saved online and synced in real time, which means a whole team can look at the same board and see updates as they happen.
+
+We chose to build this as a mobile app because most people manage their day from their phone, not a desktop. A board you can pull up anywhere and update with a quick drag fits how students and
+small teams actually work.
+
+## Problem Statement
+
+A lot of students and small teams don't really have a proper way to keep track of who is doing what. Group assignments and side projects usually get organised through WhatsApp chats, random to-do notes, or just verbal agreements, and things slip through the cracks fast. There's no single place where everyone can see what still needs to be done, what's in progress, and what's already
+finished.
+
+The common task apps out there either feel too heavy and complicated for a small group, or they don't show progress in a clear visual way. People end up not knowing the status of a task until hey ask someone directly, deadlines get forgotten, and the same work sometimes gets done twice.
+
+KanbanBoard tries to solve this by giving the team one shared board that updates live. Everyone logs into their own account, tasks are organised into clear stages, and moving a task forward is as easy as dragging a card. Because it's backed by Firebase, the board stays in sync for everyone
+without anyone having to refresh or message "is this done yet?".
+
+## Objective
+
+- Give small teams and students one shared place to organise tasks visually.
+- Make updating progress as quick as dragging a card between columns.
+- Keep everything synced in real time across all members through Firebase.
+- Keep the app simple and clean so there's almost no learning curve.
+
+## Target Users & Platform
+
+- **Target users:** university students and small teams who need a lightweight way to manage group tasks and assignments.
+- **Platform:** Android (built with Flutter, so it can extend to iOS later).
+
+## Tech Stack
+
+- **Framework:** Flutter (Dart)
+- **Backend as a Service:** Firebase (Authentication, Cloud Firestore)
+- **AI:** Firebase AI Logic (Gemini) for the AI task import feature
+- **State management:** Provider
+
+---
+
+## Member Contributions
+
+> Each member: copy the template block below, fill it in, and add it as a new `###` subsection at
+> the bottom of this section. Keep the same headings (**What I worked on / Details / Problems
+> faced**) so the README stays consistent for everyone.
+>
+> ```
+> ### <Your Name> – <Matric No>
+> **What I worked on:** <short summary>
+> **Details:** <what you built, in plain language>
+> **Problems faced:** <problems and how you solved them>
+> ```
+
+### Muhammad Hafiz Bin Mohd Khairulariman – 2314629
+
+**What I worked on:** Firebase backend setup, the authentication flow (login/register), the Kanban board page where users manage their tasks, and the AI task import feature that turns a PDF brief into ready-made tasks.
+
+**Details:**
+
+**1. Firebase setup.** Before anyone could log in or save a task, the app needed Firebase connected properly, which honestly took me a while to get right. I added the Firebase packages the app depends on:
+
+- **firebase_core** – needed to start Firebase at all
+- **firebase_auth** – for the login/register
+- **cloud_firestore** – the database where tasks are stored
+
+Firebase gets initialised at the very start of the app (in `main.dart`) before the UI is built, otherwise the auth and database calls crash because the services aren't ready yet. I learned that the hard way. I also set up App Check so it only turns on for release builds, because while developing it kept blocking my requests on the emulator.
+
+**2. Authentication.** The auth code lives in `lib/features/auth/`. I kept the actual Firebase calls in a separate service class (`auth_service.dart`) so the screens don't talk to Firebase directly – they just call methods like sign in, register and sign out. This made it cleaner and easier to reuse. The screens I built are the welcome screen, the login form, and the register form.
+
+For the forms I used Flutter's `Form` and `TextFormField` with validators, so empty or invalid fields get caught before anything is sent to Firebase. I added validation for the email and password fields and a show/hide password button. One part I'm happy with is the error handling – Firebase throws ugly codes like `invalid-credential` that a normal user wouldn't understand, so I wrote a small helper that turns them into plain messages like *"Incorrect email or password."* before showing them on screen. The whole login state is driven by a stream that listens to Firebase's auth changes, so the app automatically switches between the welcome screen and the main
+app when a user logs in or out.
+
+**3. The Kanban board page.** This was the biggest part. The board lives in `lib/features/board/` and I split it into screens, widgets and services so it isn't one giant file (board screen and task detail screen; column, task card, add-task sheet and settings sheet widgets, and a firestore_service that holds all the database calls for tasks).
+
+- **Real-time tasks:** the board listens to a live stream, so when a task is added, edited or moved (even by a teammate) it shows up without refreshing.
+- **Drag and drop:** each column is a drop target and each card can be dragged. Dropping a card on another column updates its status and shows a snackbar like *"Moved to Doing"*. The column highlights while you drag a card over it.
+- **Auto-scroll:** dragging a card to the screen edge scrolls the board automatically, so you can move cards across columns that don't all fit on screen. This was fiddly to get smooth.
+- **CRUD for tasks:** adding/editing happens in a bottom sheet. A task has a title, description, priority, assignee, start date, deadline and a subtask checklist. Tapping a card opens the detail screen to edit or delete it.
+- **Display settings:** a settings sheet to sort tasks (priority, deadline, title, newest) and toggle what shows on the cards.
+- **UX touches:** a time-based greeting in the app bar, empty-state messages so blank columns don't look broken, and horizontal scrolling to handle overflow.
+
+**4. AI task import (PDF).** This is the feature that most interesting. Instead of typing out every task by hand, a user can upload their assignment or group project brief as a PDF (or just paste the text), pick a start date and deadline, and the app reads it and generates a full list of tasks automatically. It lives in `lib/features/ai_import/`.
+
+I used Firebase AI Logic (Gemini) for this. The PDF is sent straight to the model along with a prompt, and I made it return structured JSON using a response schema, so I always get back clean task data (title, description, priority, dates, subtasks and a suggested assignee) instead of plain paragraphs I'd have to parse myself. The prompt is written to think like a real student group and produce concrete tasks (e.g. "Write Introduction section", "Design ERD and database schema") rather than vague phases like "Implementation".
+
+- **PDF picker:** uses `file_picker` to choose a PDF, with a size limit (~15 MB) so big files don't break things.
+- **Scheduling:** the model spreads tasks between the chosen start and deadline, and I clamp every returned date back inside that range in case it goes out of bounds.
+- **Assignees:** if the team has members, the model suggests who should do what, and I match those names back to real member IDs.
+- **Preview before saving:** extracted tasks open in a preview screen first, so nothing gets written to the board until the user is happy with it. Saving them uses a single batch write to Firestore.
+
+**Problems faced:**
+
+- *Firebase wouldn't initialise properly at first* – fixed it by making sure Firebase finishes initialising before the app UI is built.
+- *App Check kept blocking my requests during development* – set it to only run in release builds.
+- *Ugly Firebase error messages* – wrote a helper to map error codes to friendly text.
+- *Board overflowed on smaller screens* – used a horizontal scroll plus the edge auto-scroll so
+  everything stays reachable.
+- *CocoaPods/Podfile issues on iOS* – cleaned and reinstalled the pods to get a stable build.
+- *Merge conflicts when combining feature branches* – worked through them with the group and made
+  sure the board logic stayed intact after merging.
+
+<!-- Next member: add your ### subsection below this line, following the template above. -->
+
+---
+
+## How to Run
+
+1. Run `flutter pub get` to install the packages.
+2. Make sure the Firebase config files are in place (`google-services.json` for Android).
+3. Run `flutter run`.
+
+After that, register an account, create or select a team, and you can start adding tasks to the
+board.
+
+---
+
+## References
+
+> Add your own sources here in APA format.
+
+Firebase. (2024). *Add Firebase to your Flutter app*. Google. https://firebase.google.com/docs/flutter/setup
+
+Firebase. (2024). *Get started with Firebase Authentication on Flutter*. Google. https://firebase.google.com/docs/auth/flutter/start
+
+Firebase. (2024). *Get data with Cloud Firestore*. Google. https://firebase.google.com/docs/firestore/query-data/get-data
+
+Flutter. (2024). *Drag a UI element*. https://docs.flutter.dev/cookbook/effects/drag-a-widget
+
+Flutter. (2024). *Build a form with validation*. https://docs.flutter.dev/cookbook/forms/validation
+
+Firebase. (2024). *Firebase AI Logic*. Google. https://firebase.google.com/docs/ai-logic
+
+Google. (2024). *Generate structured output (JSON) using the Gemini API*. https://ai.google.dev/gemini-api/docs/structured-output
+
+---
+
+## Generative AI Disclosure
+
+- **Hafiz (2314629) – AI used inside the app:** The AI task import feature uses Google's Gemini model (through Firebase AI Logic) to read a PDF brief and generate tasks.This is the only part that was vibecoded. 
+
