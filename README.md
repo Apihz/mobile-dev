@@ -10,7 +10,7 @@
 |---|---|---|
 | Muhammad Hafiz Bin Mohd Khairulariman | 2314629 | Firebase setup, Authentication, Board page, AI task import |
 | _<name>_ | _<matric no>_ | _<tasks>_ |
-| _<name>_ | _<matric no>_ | _<tasks>_ |
+| Syazwan Fariz Bin Shamsul Azzmar | 2012003 | _<tasks>_ |
 | _<name>_ | _<matric no>_ | _<tasks>_ |
 
 ---
@@ -116,6 +116,26 @@ I used Firebase AI Logic (Gemini) for this. The PDF is sent straight to the mode
 
 <!-- Next member: add your ### subsection below this line, following the template above. -->
 
+### [Syazwan Fariz Bin Shamsul Azmar] – [2012003]
+
+**What I worked on:** Complete frontend implementation, architectural state mapping, and real-time backend synchronization for the personal Daily Planner module, including the development of an interactive month-view calendar with contextual deadline markers, synchronous client-side dataset filtering pipelines, and visual layout alignment with our global application scaffolding.
+
+**Details:**
+
+* **1. TableCalendar Integration & Design System Compliance:** I integrated the `table_calendar` package to serve as the core visual calendar interface for students. To maintain a cohesive look across screens, I hardcoded our group’s exact theme specifications as class-level immutable `static const Color` flags (including `0xFF131315` for the canvas, `0xFF0E0E10` for card surfaces, and `0xFF5B5FEF` for primary buttons). This micro-optimization stores hex configurations statically in memory, preventing wasteful object re-allocations during Flutter frame redraws.
+* **2. Memory-Cached Contextual Deadline Markers:** I configured the calendar’s `eventLoader` property to scan our live task array and dynamically render a green indicator dot directly under dates containing active deliverables. This relies on recognition over recall, showing students heavy delivery weeks at a glance. It searches the synchronized in-memory cache directly, which keeps the scrolling interface running at a smooth 60 FPS while protecting our Firebase read limits.
+* **3. Real-Time Data Streaming & User Context Isolation:** I wired the entire screen layout to a Cloud Firestore database stream using a native Flutter `StreamBuilder` that tracks our project’s tasks subcollection via `service.watchTasks(projectId)`. When a teammate creates or edits an item, the updates sync live without requiring a page refresh. I wrote a client-side database query using a high-order `.where()` filter on the snapshot array to isolate rows where the logged-in user is the explicit assignee (`currentUser.uid` or unassigned) while discarding completed data entries (`status != 'done'`).
+* **4. Temporal Normalization & Chronological Triage Buckets:** I built a date evaluation loop that strips out hour, minute, and millisecond properties from `DateTime.now()` to create a clean `todayDateOnly` reference anchor. This prevents timezone slipping or late-night boundary calculation errors. The system computes due-date differences via `.difference()`, sorting active deliverables into three distinct list arrays: *Overdue* (flagged with an urgent red left border), *Today*, and *Upcoming*. It then runs inline comparison mutators (`.sort()`) to arrange all generated list cards in ascending chronological order.
+* **5. UX Guard Gates & Interactive Components Integration:** I implemented structural conditional checks at the top of the main `build` routine. If data streams are loading, the app locks down behind a progress spinner. If a user hasn't joined or selected an active team project (`currentTeam == null`), a fallback placeholder screen triggers. This view renders our shared custom `TeamSwitcherDropdown` directly inside the app bar actions array so the student can instantly choose a group context and safely recover page data.
+* **6. Mobile Thumb-Zone Call to Actions:** I aligned our screen's submission workflows with the `BoardScreen` by stripping out old text elements from the app bar and implementing a prominent bottom-anchored Floating Action Button (+). This button hooks straight into the framework's native `showModalBottomSheet` layout engine to slide up our universal `AddTaskSheet` form from the bottom of the viewport. It pre-seeds the initial workspace status parameter to `'todo'`, ensuring rapid, comfortable task creation within a student's natural typing range.
+
+**Problems faced:**
+
+* *Fragile Cross-Feature Relative Imports:* When referencing widgets from other folders (like importing the board folder's task components), using multi-hop relative directory jumps (`../../../../`) broke path tracking and threw 25 syntax errors. I solved this by cleaning up the header files and refactoring every module import to use explicit, absolute project package strings (`package:flutter_app_1/...`).
+* *Font Weight Token Syntax Typo:* An accidental lowercase typo inside our custom typography mapping configuration (`FontWeight.g600`) threw unexpected framework exceptions and blocked hot reloading. I fixed it immediately by reviewing the typography stack and substituting the text with a valid material system weight token (`FontWeight.w600`).
+* *Dart VM Connection Protocol Timeout Errors:* Running deep project cache wipes (`flutter clean`) occasionally caused local compilation tasks to heavily consume memory resources, triggering thread stutters that crashed the Dart proxy bridge tunnel with the emulator device. I resolved this port collision by executing a terminal server reset sequence (`adb kill-server` followed by `adb start-server`) and forcing a dedicated fallback outbound debugger port flag (`flutter run --vmservice-out-bound-port=8888`).
+
+<!-- Next member: add your ### subsection below this line, following the template above. -->
 ---
 
 ## How to Run
@@ -147,6 +167,13 @@ Firebase. (2024). *Firebase AI Logic*. Google. https://firebase.google.com/docs/
 
 Google. (2024). *Generate structured output (JSON) using the Gemini API*. https://ai.google.dev/gemini-api/docs/structured-output
 
+Asynchronous programming: Streams. (2025). https://dart.dev/libraries/async/using-streams
+
+Send data to a new screen. (2025). https://docs.flutter.dev/cookbook/navigation/passing-data
+
+Get realtime updates with Cloud Firestore  |  Firebase. (2026). Firebase. https://firebase.google.com/docs/firestore/query-data/listen
+
+table_calendar | Flutter package. (2025). Dart Packages. https://pub.dev/packages/table_calendar
 ---
 
 ## Generative AI Disclosure
