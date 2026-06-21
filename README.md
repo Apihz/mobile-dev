@@ -164,8 +164,6 @@ board.
 
 ## References
 
-> Add your own sources here in APA format.
-
 Firebase. (2024). *Add Firebase to your Flutter app*. Google. https://firebase.google.com/docs/flutter/setup
 
 Firebase. (2024). *Get started with Firebase Authentication on Flutter*. Google. https://firebase.google.com/docs/auth/flutter/start
