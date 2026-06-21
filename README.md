@@ -54,17 +54,6 @@ without anyone having to refresh or message "is this done yet?".
 
 ## Member Contributions
 
-> Each member: copy the template block below, fill it in, and add it as a new `###` subsection at
-> the bottom of this section. Keep the same headings (**What I worked on / Details / Problems
-> faced**) so the README stays consistent for everyone.
->
-> ```
-> ### <Your Name> – <Matric No>
-> **What I worked on:** <short summary>
-> **Details:** <what you built, in plain language>
-> **Problems faced:** <problems and how you solved them>
-> ```
-
 ### Muhammad Hafiz Bin Mohd Khairulariman – 2314629
 
 **What I worked on:** Firebase backend setup, the authentication flow (login/register), the Kanban board page where users manage their tasks, and the AI task import feature that turns a PDF brief into ready-made tasks.
@@ -134,7 +123,6 @@ I used Firebase AI Logic (Gemini) for this. The PDF is sent straight to the mode
 * *Font Weight Token Syntax Typo:* An accidental lowercase typo inside our custom typography mapping configuration (`FontWeight.g600`) threw unexpected framework exceptions and blocked hot reloading. I fixed it immediately by reviewing the typography stack and substituting the text with a valid material system weight token (`FontWeight.w600`).
 * *Dart VM Connection Protocol Timeout Errors:* Running deep project cache wipes (`flutter clean`) occasionally caused local compilation tasks to heavily consume memory resources, triggering thread stutters that crashed the Dart proxy bridge tunnel with the emulator device. I resolved this port collision by executing a terminal server reset sequence (`adb kill-server` followed by `adb start-server`) and forcing a dedicated fallback outbound debugger port flag (`flutter run --vmservice-out-bound-port=8888`).
 
-<!-- Next member: add your ### subsection below this line, following the template above. -->
 ### [Aiman bin Ahmad Zainulkamal] - [2311929]
 
 **What I worked on:** Creating a team page that contains information about a specific team that has been created by users. Team leader is chosen based on a role-based member management. Team leader can add new teammates into the team and those teammates are appeared in the page with two information, which are name and email. Team leader can track the project progress among teammates as the page is integrated with the tasks at the kanban page. Teammates that are freshly join the team are able to do so by using the join-by-code system.
