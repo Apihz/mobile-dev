@@ -9,7 +9,6 @@
 | Name | Matric No | Assigned Tasks |
 |---|---|---|
 | Muhammad Hafiz Bin Mohd Khairulariman | 2314629 | Firebase setup, Authentication, Board page, AI task import |
-| _<name>_ | _<matric no>_ | _<tasks>_ |
 | Syazwan Fariz Bin Shamsul Azzmar | 2012003 | Planner page, UI and design for planner page. |
 | Aiman bin Ahmad Zainulkamal| 2311929 | Team page, Team collection in Firebase, Enhancing UI for Team page |
 
