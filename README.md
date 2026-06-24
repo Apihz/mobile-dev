@@ -203,5 +203,6 @@ table_calendar | Flutter package. (2025). Dart Packages. https://pub.dev/package
 
 ## Generative AI Disclosure
 
-- **Hafiz (2314629) – AI used inside the app:** The AI task import feature uses Google's Gemini model (through Firebase AI Logic) to read a PDF brief and generate tasks.This is the only part that was vibecoded. 
+- **Hafiz (2314629) – AI used inside the app:** The AI task import feature uses Google's Gemini model (through Firebase AI Logic) to read a PDF brief and generate tasks.This is the only part that was vibecoded.
+- **Aiman (2311929) - AI used inside the app:** The DeepSeek V4 Model is being used for generating comments and refine some codeblocks when there are some unsolved errors through suggestions for integrating Firebase with the app in `firestore_services.dart` and `team_services.dart` to make them runs smoothly. 
 
